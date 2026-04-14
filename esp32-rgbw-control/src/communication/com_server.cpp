@@ -288,13 +288,18 @@ void handleWebSocketEvent(uint8_t client_num, WStype_t type, uint8_t *payload, s
       Serial.printf("Client %u connected\n", client_num);
       break;
     case WStype_TEXT:
-      Serial.printf("Received message: %s\n", payload);
+      Serial.printf("Received text message: %s\n", payload);
       // 处理心跳包
       if (strstr((char*)payload, "ping") != NULL) {
         webSocket.sendTXT(client_num, "{\"cmd\": \"pong\"}");
       } else {
         handleCommand((char*)payload);
       }
+      break;
+    case WStype_BIN:
+      Serial.printf("Received binary message, length: %u\n", length);
+      // 处理二进制消息
+      handleCommand((char*)payload);
       break;
     case WStype_ERROR:
       Serial.printf("WebSocket error\n");
