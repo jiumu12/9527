@@ -151,25 +151,35 @@ GND ---------------------------+--[灯带GND]
 esp32-rgbw-control/
 ├── platformio.ini          # PlatformIO配置文件
 ├── README.md               # 项目说明
-└── src/
-    ├── main.cpp            # 主程序
-    ├── config.h            # 配置文件
-    ├── hardware_interface.h # 硬件抽象层接口
-    ├── real_hardware.cpp   # 真实硬件实现
-    ├── real_hardware.h
-    ├── mock_hardware.h     # 模拟硬件实现（用于测试）
-    ├── hw_init.cpp         # 硬件初始化模块
-    ├── hw_init.h
-    ├── network_mgr.cpp     # 网络连接模块
-    ├── network_mgr.h
-    ├── com_server.cpp      # 通信服务器模块（包含Web界面）
-    ├── com_server.h
-    ├── cmd_handler.cpp     # 协议解析与命令处理模块
-    ├── cmd_handler.h
-    ├── light_engine.cpp    # 灯光引擎核心模块
-    ├── light_engine.h
-    ├── led_driver.cpp      # 灯带驱动抽象层
-    └── led_driver.h
+├── include/                # 头文件目录
+│   ├── communication/      # 通信相关头文件
+│   │   ├── cmd_handler.h   # 命令处理模块头文件
+│   │   └── com_server.h    # 通信服务器模块头文件
+│   ├── config/             # 配置文件目录
+│   │   └── config.h        # 配置文件
+│   ├── hardware/           # 硬件相关头文件
+│   │   ├── hardware_interface.h # 硬件抽象层接口
+│   │   ├── hw_init.h       # 硬件初始化模块头文件
+│   │   ├── mock_hardware.h # 模拟硬件实现（用于测试）
+│   │   └── real_hardware.h # 真实硬件实现头文件
+│   ├── light/              # 灯光相关头文件
+│   │   ├── led_driver.h    # 灯带驱动抽象层头文件
+│   │   └── light_engine.h  # 灯光引擎核心模块头文件
+│   └── network/            # 网络相关头文件
+│       └── network_mgr.h   # 网络连接模块头文件
+└── src/                    # 源代码目录
+    ├── communication/      # 通信相关源代码
+    │   ├── cmd_handler.cpp # 命令处理模块源代码
+    │   └── com_server.cpp  # 通信服务器模块源代码
+    ├── hardware/           # 硬件相关源代码
+    │   ├── hw_init.cpp     # 硬件初始化模块源代码
+    │   └── real_hardware.cpp # 真实硬件实现源代码
+    ├── light/              # 灯光相关源代码
+    │   ├── led_driver.cpp  # 灯带驱动抽象层源代码
+    │   └── light_engine.cpp # 灯光引擎核心模块源代码
+    ├── network/            # 网络相关源代码
+    │   └── network_mgr.cpp # 网络连接模块源代码
+    └── main.cpp            # 主程序
 ```
 
 #### 核心模块
