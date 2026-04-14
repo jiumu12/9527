@@ -303,6 +303,10 @@ esp32-rgbw-app/
 
 ## 开发顺序
 
+详细的开发步骤指南请参考 [DEVELOPMENT_STEPS.md](file:///workspace/DEVELOPMENT_STEPS.md) 文件，其中包含了从环境搭建到系统部署的完整流程。
+
+### 开发阶段概览
+
 1. **阶段1（固件基础）**：实现led_driver，点亮灯带。构建light_engine，实现静态颜色和呼吸效果。
 2. **阶段2（网络与通信）**：实现network_mgr和com_server。实现cmd_handler解析简单指令。
 3. **阶段3（App基础）**：实现App的设备发现与连接。实现基础的静态颜色控制UI。
