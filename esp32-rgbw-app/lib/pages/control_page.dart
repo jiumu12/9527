@@ -6,6 +6,7 @@ import 'package:esp32_rgbw_app/models/color.dart';
 import 'package:esp32_rgbw_app/models/effect.dart';
 import 'package:esp32_rgbw_app/controllers/light_controller.dart';
 import 'package:esp32_rgbw_app/controllers/device_controller.dart';
+import 'dart:async';
 
 class ControlPage extends StatefulWidget {
   final Device device;
@@ -18,6 +19,21 @@ class ControlPage extends StatefulWidget {
 
 class _ControlPageState extends State<ControlPage> {
   bool _showColorPicker = false;
+  Timer? _debounceTimer;
+  final Duration _debounceDuration = const Duration(milliseconds: 200);
+
+  void _debounce(VoidCallback callback) {
+    if (_debounceTimer != null) {
+      _debounceTimer?.cancel();
+    }
+    _debounceTimer = Timer(_debounceDuration, callback);
+  }
+
+  @override
+  void dispose() {
+    _debounceTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -102,7 +118,9 @@ class _ControlPageState extends State<ControlPage> {
                                   min: 0,
                                   max: 100,
                                   onChanged: (value) {
-                                    lightController.updateSpeed(value.round());
+                                    _debounce(() {
+                                      lightController.updateSpeed(value.round());
+                                    });
                                   },
                                 ),
                               ),
@@ -158,14 +176,16 @@ class _ControlPageState extends State<ControlPage> {
                                 min: 0,
                                 max: 255,
                                 onChanged: (value) {
-                                  final newColor = ColorModel(
-                                    r: value.round(),
-                                    g: effect.color.g,
-                                    b: effect.color.b,
-                                    w: effect.color.w,
-                                    brightness: effect.color.brightness,
-                                  );
-                                  lightController.updateColor(newColor);
+                                  _debounce(() {
+                                    final newColor = ColorModel(
+                                      r: value.round(),
+                                      g: effect.color.g,
+                                      b: effect.color.b,
+                                      w: effect.color.w,
+                                      brightness: effect.color.brightness,
+                                    );
+                                    lightController.updateColor(newColor);
+                                  });
                                 },
                                 activeColor: Colors.red,
                               ),
@@ -182,14 +202,16 @@ class _ControlPageState extends State<ControlPage> {
                                 min: 0,
                                 max: 255,
                                 onChanged: (value) {
-                                  final newColor = ColorModel(
-                                    r: effect.color.r,
-                                    g: value.round(),
-                                    b: effect.color.b,
-                                    w: effect.color.w,
-                                    brightness: effect.color.brightness,
-                                  );
-                                  lightController.updateColor(newColor);
+                                  _debounce(() {
+                                    final newColor = ColorModel(
+                                      r: effect.color.r,
+                                      g: value.round(),
+                                      b: effect.color.b,
+                                      w: effect.color.w,
+                                      brightness: effect.color.brightness,
+                                    );
+                                    lightController.updateColor(newColor);
+                                  });
                                 },
                                 activeColor: Colors.green,
                               ),
@@ -206,14 +228,16 @@ class _ControlPageState extends State<ControlPage> {
                                 min: 0,
                                 max: 255,
                                 onChanged: (value) {
-                                  final newColor = ColorModel(
-                                    r: effect.color.r,
-                                    g: effect.color.g,
-                                    b: value.round(),
-                                    w: effect.color.w,
-                                    brightness: effect.color.brightness,
-                                  );
-                                  lightController.updateColor(newColor);
+                                  _debounce(() {
+                                    final newColor = ColorModel(
+                                      r: effect.color.r,
+                                      g: effect.color.g,
+                                      b: value.round(),
+                                      w: effect.color.w,
+                                      brightness: effect.color.brightness,
+                                    );
+                                    lightController.updateColor(newColor);
+                                  });
                                 },
                                 activeColor: Colors.blue,
                               ),
@@ -230,14 +254,16 @@ class _ControlPageState extends State<ControlPage> {
                                 min: 0,
                                 max: 255,
                                 onChanged: (value) {
-                                  final newColor = ColorModel(
-                                    r: effect.color.r,
-                                    g: effect.color.g,
-                                    b: effect.color.b,
-                                    w: value.round(),
-                                    brightness: effect.color.brightness,
-                                  );
-                                  lightController.updateColor(newColor);
+                                  _debounce(() {
+                                    final newColor = ColorModel(
+                                      r: effect.color.r,
+                                      g: effect.color.g,
+                                      b: effect.color.b,
+                                      w: value.round(),
+                                      brightness: effect.color.brightness,
+                                    );
+                                    lightController.updateColor(newColor);
+                                  });
                                 },
                                 activeColor: Colors.white,
                               ),
@@ -272,14 +298,16 @@ class _ControlPageState extends State<ControlPage> {
                             min: 0,
                             max: 100,
                             onChanged: (value) {
-                              final newColor = ColorModel(
-                                r: effect.color.r,
-                                g: effect.color.g,
-                                b: effect.color.b,
-                                w: effect.color.w,
-                                brightness: value.round(),
-                              );
-                              lightController.updateColor(newColor);
+                              _debounce(() {
+                                final newColor = ColorModel(
+                                  r: effect.color.r,
+                                  g: effect.color.g,
+                                  b: effect.color.b,
+                                  w: effect.color.w,
+                                  brightness: value.round(),
+                                );
+                                lightController.updateColor(newColor);
+                              });
                             },
                           ),
                         ),

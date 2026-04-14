@@ -3,10 +3,15 @@
 #include "com_server.h"
 #include "light_engine.h"
 #include <Arduino.h>
+#include "esp_task_wdt.h"
 
 void setup() {
   // 初始化硬件
   initHardware();
+  
+  // 初始化看门狗定时器
+  esp_task_wdt_init(10, true); // 10秒超时
+  esp_task_wdt_add(NULL);
   
   // 初始化网络
   initNetwork();
@@ -21,6 +26,9 @@ void setup() {
 }
 
 void loop() {
+  // 喂狗
+  esp_task_wdt_reset();
+  
   // 处理WebSocket事件
   webSocket.loop();
   

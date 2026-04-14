@@ -9,11 +9,20 @@ class WebSocketService {
   late WebSocketChannel _channel;
   late StreamController<Map<String, dynamic>> _messageController;
   bool _isConnected = false;
+  String? _ipAddress;
+  int? _port;
+  Timer? _heartbeatTimer;
+  Timer? _reconnectTimer;
+  final Duration _heartbeatInterval = const Duration(seconds: 30);
+  final Duration _reconnectInterval = const Duration(seconds: 5);
 
   Stream<Map<String, dynamic>> get messageStream => _messageController.stream;
   bool get isConnected => _isConnected;
 
   Future<void> connect(String ipAddress, int port) async {
+    _ipAddress = ipAddress;
+    _port = port;
+    
     try {
       final url = 'ws://$ipAddress:$port';
       _channel = IOWebSocketChannel.connect(url);
@@ -31,23 +40,62 @@ class WebSocketService {
         onError: (error) {
           print('WebSocket error: $error');
           _isConnected = false;
+          _startReconnect();
         },
         onDone: () {
           print('WebSocket connection closed');
           _isConnected = false;
+          _startReconnect();
         },
       );
 
       _isConnected = true;
+      _startHeartbeat();
       print('Connected to $url');
     } catch (e) {
       print('Error connecting to WebSocket: $e');
       _isConnected = false;
+      _startReconnect();
       rethrow;
     }
   }
 
+  void _startHeartbeat() {
+    _heartbeatTimer?.cancel();
+    _heartbeatTimer = Timer.periodic(_heartbeatInterval, (timer) {
+      if (_isConnected) {
+        try {
+          _channel.sink.add(jsonEncode({'cmd': 'ping'}));
+        } catch (e) {
+          print('Error sending heartbeat: $e');
+          _isConnected = false;
+          _startReconnect();
+        }
+      }
+    });
+  }
+
+  void _startReconnect() {
+    _heartbeatTimer?.cancel();
+    _reconnectTimer?.cancel();
+    
+    if (_ipAddress != null && _port != null) {
+      _reconnectTimer = Timer(_reconnectInterval, () async {
+        print('Attempting to reconnect...');
+        try {
+          await connect(_ipAddress!, _port!);
+        } catch (e) {
+          print('Reconnection failed: $e');
+          _startReconnect();
+        }
+      });
+    }
+  }
+
   void disconnect() {
+    _heartbeatTimer?.cancel();
+    _reconnectTimer?.cancel();
+    
     if (_isConnected) {
       _channel.sink.close();
       _messageController.close();
