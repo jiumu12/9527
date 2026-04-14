@@ -22,7 +22,7 @@ class EffectModel {
 
   factory EffectModel.fromMap(Map<String, dynamic> map) {
     return EffectModel(
-      type: _parseEffectType(map['type'] ?? 0),
+      type: parseEffectType(map['type'] ?? 0),
       color: ColorModel.fromMap(map['color'] ?? {}),
       speed: map['speed'] ?? 50,
       isOn: map['isOn'] ?? false,
