@@ -43,6 +43,7 @@
 | ESP32开发板 | ESP32系列（如ESP32-DevKitC, ESP32-S3, ESP32-C3） | 1 | 主控制器 |
 | RGBW LED灯带 | 支持可寻址控制（如SK6812, WS2812B+W, WS2815） | 1 | 发光组件 |
 | 电源适配器 | 5V, 2A+（根据灯带长度选择） | 1 | 为ESP32和灯带供电 |
+| 路由器 | 支持2.4GHz WiFi | 1 | 提供网络连接（Station模式） |
 | 面包板 | 标准尺寸 | 1 | 临时连接 |
 | 杜邦线 | 公对公、公对母 | 若干 | 连接线路 |
 | 电阻 | 220-470Ω | 1 | 数据线串联，保护GPIO |
@@ -124,7 +125,7 @@ esp32-rgbw-control/
     ├── hw_init.h
     ├── network_mgr.cpp     # 网络连接模块
     ├── network_mgr.h
-    ├── com_server.cpp      # 通信服务器模块
+    ├── com_server.cpp      # 通信服务器模块（包含Web界面）
     ├── com_server.h
     ├── cmd_handler.cpp     # 协议解析与命令处理模块
     ├── cmd_handler.h
@@ -134,6 +135,42 @@ esp32-rgbw-control/
     ├── led_driver.h
     └── config.h            # 配置文件
 ```
+
+#### WiFi模式配置
+
+系统支持两种WiFi模式：
+
+1. **AP模式**：ESP32作为WiFi热点，手机直接连接ESP32的WiFi网络
+2. **Station模式**：ESP32连接到路由器，手机也连接到同一路由器
+
+**配置方法**：
+- 打开 `config.h` 文件
+- 修改 `WIFI_MODE` 宏定义：
+  - `0`：AP模式
+  - `1`：Station模式
+- 在Station模式下，修改 `STATION_SSID` 和 `STATION_PASSWORD` 为你的路由器信息
+
+**Station模式优势**：
+- 避免ESP32长时间作为热点导致的发热问题
+- 更稳定的网络连接
+- 支持多设备同时控制
+- 可访问互联网（如果路由器连接互联网）
+
+#### Web界面
+
+系统提供了一个简单的Web界面，作为快速验证的方式，无需安装移动应用：
+
+1. 确保ESP32和手机连接到同一网络（AP模式或Station模式）
+2. 在浏览器中访问 `http://esp32-rgbw.local`
+3. 使用Web界面控制灯带颜色、效果、亮度等
+
+**Web界面功能**：
+- 总开关控制
+- 模式选择（静态、呼吸、彩虹、闪烁）
+- RGBW颜色调节
+- 亮度控制
+- 效果速度调节
+- 实时状态显示
 
 #### 核心功能
 

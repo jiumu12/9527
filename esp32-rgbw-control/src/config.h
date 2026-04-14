@@ -2,8 +2,15 @@
 #define CONFIG_H
 
 // WiFi配置
-#define WIFI_SSID "ESP32-RGBW"
-#define WIFI_PASSWORD "12345678"
+#define WIFI_MODE 1  // 0: AP模式, 1: Station模式
+
+// AP模式配置
+#define AP_SSID "ESP32-RGBW"
+#define AP_PASSWORD "12345678"
+
+// Station模式配置（连接到路由器）
+#define STATION_SSID "YourRouterSSID"  // 替换为你的路由器SSID
+#define STATION_PASSWORD "YourRouterPassword"  // 替换为你的路由器密码
 
 // LED灯带配置
 #define LED_PIN 7                   // 推荐使用GPIO7

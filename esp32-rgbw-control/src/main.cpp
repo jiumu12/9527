@@ -32,6 +32,9 @@ void loop() {
   // 处理WebSocket事件
   webSocket.loop();
   
+  // 处理Web服务器请求
+  server.handleClient();
+  
   // 更新灯光效果
   updateLight();
   

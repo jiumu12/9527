@@ -125,10 +125,14 @@
 
 **步骤2：配置文件开发**
 - 编辑config.h文件，定义以下配置：
-  - WiFi设置（SSID、密码）
+  - WiFi设置（WiFi模式、AP模式配置、Station模式配置）
   - LED灯带设置（引脚、灯珠数量、芯片类型）
   - 服务器设置（端口、mDNS名称）
   - 系统设置（看门狗超时）
+- 配置WiFi模式：
+  - `WIFI_MODE = 0`：AP模式（ESP32作为热点）
+  - `WIFI_MODE = 1`：Station模式（ESP32连接到路由器）
+- 在Station模式下，填写路由器的SSID和密码
 
 **步骤3：硬件初始化模块**
 - 实现hw_init.cpp，包括：
@@ -165,6 +169,9 @@
   - 连接管理
   - 数据收发
   - 心跳处理
+  - Web服务器初始化（提供Web界面）
+  - Web界面HTML和JavaScript实现
+  - 处理Web请求
 
 **步骤8：命令处理模块**
 - 实现cmd_handler.cpp，包括：
