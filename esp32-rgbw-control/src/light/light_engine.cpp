@@ -1,6 +1,6 @@
-#include "light_engine.h"
-#include "config.h"
-#include "led_driver.h"
+#include "light/light_engine.h"
+#include "config/config.h"
+#include "light/led_driver.h"
 #include <Arduino.h>
 
 EffectParams currentParams;

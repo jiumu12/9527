@@ -1,7 +1,7 @@
-#include "hw_init.h"
-#include "network_mgr.h"
-#include "com_server.h"
-#include "light_engine.h"
+#include "hardware/hw_init.h"
+#include "network/network_mgr.h"
+#include "communication/com_server.h"
+#include "light/light_engine.h"
 #include <Arduino.h>
 #include "esp_task_wdt.h"
 

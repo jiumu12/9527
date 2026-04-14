@@ -1,5 +1,5 @@
-#include "hw_init.h"
-#include "config.h"
+#include "hardware/hw_init.h"
+#include "config/config.h"
 
 void initHardware() {
   initSerial();

@@ -1,5 +1,5 @@
-#include "network_mgr.h"
-#include "config.h"
+#include "network/network_mgr.h"
+#include "config/config.h"
 #include <Arduino.h>
 
 unsigned long lastReconnectAttempt = 0;

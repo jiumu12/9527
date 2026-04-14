@@ -1,7 +1,7 @@
 #ifndef LIGHT_ENGINE_H
 #define LIGHT_ENGINE_H
 
-#include "config.h"
+#include "config/config.h"
 
 void initLightEngine();
 void setStaticColor(Color color);

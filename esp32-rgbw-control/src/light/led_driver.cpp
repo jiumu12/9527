@@ -1,5 +1,5 @@
-#include "led_driver.h"
-#include "config.h"
+#include "light/led_driver.h"
+#include "config/config.h"
 #include <FastLED.h>
 
 CRGBW leds[LED_COUNT];

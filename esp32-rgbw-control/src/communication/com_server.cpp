@@ -1,6 +1,6 @@
-#include "com_server.h"
-#include "config.h"
-#include "cmd_handler.h"
+#include "communication/com_server.h"
+#include "config/config.h"
+#include "communication/cmd_handler.h"
 #include <Arduino.h>
 #include <WebServer.h>
 

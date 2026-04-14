@@ -1,7 +1,7 @@
-#include "cmd_handler.h"
-#include "config.h"
-#include "light_engine.h"
-#include "com_server.h"
+#include "communication/cmd_handler.h"
+#include "config/config.h"
+#include "light/light_engine.h"
+#include "communication/com_server.h"
 #include <ArduinoJson.h>
 
 void handleCommand(char* command) {
