@@ -5,10 +5,10 @@ import '../models/color.dart';
 class ColorUtils {
   // 颜色转换缓存
   static final Map<String, Map<String, double>> _rgbwToHsvCache = {};
-  static final Map<String, ColorModel> _hsvToRgbwCache = {};
+  static final Map<String, Color> _hsvToRgbwCache = {};
 
   // RGBW转HSV
-  static Map<String, double> rgbwToHsv(ColorModel color) {
+  static Map<String, double> rgbwToHsv(Color color) {
     // 生成缓存键
     String cacheKey = '${color.r},${color.g},${color.b},${color.w}';
     
@@ -61,7 +61,7 @@ class ColorUtils {
   }
 
   // HSV转RGBW
-  static ColorModel hsvToRgbw(double h, double s, double v, double w) {
+  static Color hsvToRgbw(double h, double s, double v, double w) {
     // 生成缓存键
     String cacheKey = '${h.round()},${s.round()},${v.round()},${w.round()}';
     
@@ -118,12 +118,12 @@ class ColorUtils {
     bInt = bInt.clamp(0, 255);
     wInt = wInt.clamp(0, 255);
 
-    ColorModel result = ColorModel(
-      r: rInt,
-      g: gInt,
-      b: bInt,
-      w: wInt,
-      brightness: 100,
+    Color result = Color(
+      rInt,
+      gInt,
+      bInt,
+      wInt,
+      100,
     );
 
     // 缓存结果
@@ -137,13 +137,13 @@ class ColorUtils {
   }
 
   // 调整亮度
-  static ColorModel adjustBrightness(ColorModel color, double factor) {
-    return ColorModel(
-      r: (color.r * factor).round().clamp(0, 255),
-      g: (color.g * factor).round().clamp(0, 255),
-      b: (color.b * factor).round().clamp(0, 255),
-      w: (color.w * factor).round().clamp(0, 255),
-      brightness: color.brightness,
+  static Color adjustBrightness(Color color, double factor) {
+    return Color(
+      (color.r * factor).round().clamp(0, 255),
+      (color.g * factor).round().clamp(0, 255),
+      (color.b * factor).round().clamp(0, 255),
+      (color.w * factor).round().clamp(0, 255),
+      color.brightness,
     );
   }
 
