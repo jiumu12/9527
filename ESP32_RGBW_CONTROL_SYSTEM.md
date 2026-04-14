@@ -199,21 +199,36 @@ esp32-rgbw-control/
 esp32-rgbw-app/
 ├── lib/
 │   ├── main.dart                    # 应用入口
+│   ├── constants/                   # 常量定义
+│   │   └── app_constants.dart       # 应用常量
+│   ├── controllers/                 # 控制器
+│   │   ├── device_controller.dart   # 设备管理控制器
+│   │   └── light_controller.dart    # 灯光控制控制器
 │   ├── models/                      # 数据模型
 │   │   ├── color.dart               # 颜色模型
 │   │   ├── device.dart              # 设备模型
 │   │   └── effect.dart              # 效果模型
+│   ├── pages/                       # 页面
+│   │   ├── control_page.dart        # 控制页面
+│   │   └── device_list_page.dart    # 设备列表页
 │   ├── services/                    # 服务层
 │   │   ├── discovery_service.dart   # 设备发现服务
 │   │   └── websocket_service.dart   # WebSocket通信服务
-│   ├── controllers/                 # 控制器
-│   │   ├── device_controller.dart   # 设备管理控制器
-│   │   └── light_controller.dart    # 灯光控制控制器
-│   └── pages/                       # 页面
-│       ├── control_page.dart        # 控制页面
-│       └── device_list_page.dart    # 设备列表页
-├── pubspec.yaml                     # 依赖管理
-└── README.md                        # 项目说明
+│   ├── utils/                       # 工具类
+│   │   ├── color_utils.dart         # 颜色工具
+│   │   └── network_utils.dart       # 网络工具
+│   ├── widgets/                     # 可重用组件
+│   │   ├── color_picker.dart        # 颜色选择器组件
+│   │   └── effect_selector.dart     # 效果选择器组件
+│   └── theme/                       # 主题管理
+│       └── app_theme.dart           # 应用主题
+├── assets/                          # 静态资源
+│   ├── images/                      # 图片
+│   └── fonts/                       # 字体
+├── test/                            # 单元测试
+├── integration_test/                # 集成测试
+├── README.md                        # 项目说明
+└── pubspec.yaml                     # 依赖管理
 ```
 
 #### 核心功能
@@ -224,6 +239,10 @@ esp32-rgbw-app/
 4. **效果控制**: 切换不同灯光效果（静态、呼吸、彩虹、闪烁）
 5. **亮度调节**: 整体亮度控制
 6. **状态同步**: 实时同步设备状态到UI
+7. **主题管理**: 支持浅色和深色主题切换
+8. **工具类**: 提供颜色转换、网络工具等实用功能
+9. **可重用组件**: 颜色选择器、效果选择器等可重用UI组件
+10. **常量管理**: 集中管理应用常量和配置
 
 ---
 

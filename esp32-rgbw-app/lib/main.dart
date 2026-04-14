@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:esp32_rgbw_app/controllers/device_controller.dart';
-import 'package:esp32_rgbw_app/pages/device_list_page.dart';
+import 'controllers/device_controller.dart';
+import 'pages/device_list_page.dart';
+import 'theme/app_theme.dart';
+import 'constants/app_constants.dart';
 
 void main() {
   runApp(
@@ -20,11 +22,10 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'ESP32 RGBW Control',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-      ),
+      title: AppConstants.appName,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.system,
       home: const DeviceListPage(),
     );
   }
