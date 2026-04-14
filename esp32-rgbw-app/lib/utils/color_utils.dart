@@ -3,9 +3,104 @@
 import '../models/color.dart';
 
 class ColorUtils {
-  // 颜色转换缓存
+  // 颜色转换缓存 - 使用更大的缓存容量
   static final Map<String, Map<String, double>> _rgbwToHsvCache = {};
   static final Map<String, Color> _hsvToRgbwCache = {};
+  static const int _maxCacheSize = 500;
+
+  // HSV查找表 - 预计算常用颜色值
+  static final Map<int, Map<int, Map<int, Color>>> _hsvLookupTable = {};
+  static bool _lookupTableInitialized = false;
+
+  // 初始化查找表
+  static void _initLookupTable() {
+    if (!_lookupTableInitialized) {
+      // 预计算常用的HSL值
+      for (int h = 0; h < 360; h += 10) {
+        _hsvLookupTable[h] = {};
+        for (int s = 0; s <= 100; s += 20) {
+          _hsvLookupTable[h][s] = {};
+          for (int v = 0; v <= 100; v += 20) {
+            _hsvLookupTable[h][s][v] = _calculateHsvToRgbw(h.toDouble(), s.toDouble(), v.toDouble(), 0);
+          }
+        }
+      }
+      _lookupTableInitialized = true;
+    }
+  }
+
+  // 从查找表获取颜色
+  static Color _getColorFromLookupTable(double h, double s, double v) {
+    int hKey = (h ~/ 10) * 10;
+    int sKey = (s ~/ 20) * 20;
+    int vKey = (v ~/ 20) * 20;
+
+    if (_hsvLookupTable.containsKey(hKey) &&
+        _hsvLookupTable[hKey]!.containsKey(sKey) &&
+        _hsvLookupTable[hKey]![sKey]!.containsKey(vKey)) {
+      return _hsvLookupTable[hKey]![sKey]![vKey]!;
+    }
+    return _calculateHsvToRgbw(h, s, v, 0);
+  }
+
+  // 计算HSV到RGBW的转换
+  static Color _calculateHsvToRgbw(double h, double s, double v, double w) {
+    s /= 100;
+    v /= 100;
+    w /= 100;
+
+    int hi = ((h / 60) % 6).floor();
+    double f = (h / 60) - hi;
+    double p = v * (1 - s);
+    double q = v * (1 - f * s);
+    double t = v * (1 - (1 - f) * s);
+
+    double r, g, b;
+
+    switch (hi) {
+      case 0:
+        r = v; g = t; b = p; break;
+      case 1:
+        r = q; g = v; b = p; break;
+      case 2:
+        r = p; g = v; b = t; break;
+      case 3:
+        r = p; g = q; b = v; break;
+      case 4:
+        r = t; g = p; b = v; break;
+      case 5:
+        r = v; g = p; b = q; break;
+      default:
+        r = 0; g = 0; b = 0; break;
+    }
+
+    // 优化RGBW转换，与ESP32端保持一致
+    int rInt = (r * 255).round();
+    int gInt = (g * 255).round();
+    int bInt = (b * 255).round();
+    int wInt = (w * 255).round();
+
+    // 利用白色通道提高亮度 - 优化算法
+    int minRgb = [rInt, gInt, bInt].reduce((a, b) => a < b ? a : b);
+    rInt -= minRgb;
+    gInt -= minRgb;
+    bInt -= minRgb;
+    wInt += minRgb;
+
+    // 确保值在有效范围内
+    rInt = rInt.clamp(0, 255);
+    gInt = gInt.clamp(0, 255);
+    bInt = bInt.clamp(0, 255);
+    wInt = wInt.clamp(0, 255);
+
+    return Color(
+      rInt,
+      gInt,
+      bInt,
+      wInt,
+      100,
+    );
+  }
 
   // RGBW转HSV
   static Map<String, double> rgbwToHsv(Color color) {
@@ -53,7 +148,7 @@ class ColorUtils {
     // 缓存结果
     _rgbwToHsvCache[cacheKey] = result;
     // 限制缓存大小
-    if (_rgbwToHsvCache.length > 100) {
+    if (_rgbwToHsvCache.length > _maxCacheSize) {
       _rgbwToHsvCache.remove(_rgbwToHsvCache.keys.first);
     }
 
@@ -62,6 +157,9 @@ class ColorUtils {
 
   // HSV转RGBW
   static Color hsvToRgbw(double h, double s, double v, double w) {
+    // 确保查找表初始化
+    _initLookupTable();
+    
     // 生成缓存键
     String cacheKey = '${h.round()},${s.round()},${v.round()},${w.round()}';
     
@@ -70,66 +168,26 @@ class ColorUtils {
       return _hsvToRgbwCache[cacheKey]!;
     }
 
-    s /= 100;
-    v /= 100;
-    w /= 100;
-
-    int hi = ((h / 60) % 6).floor();
-    double f = (h / 60) - hi;
-    double p = v * (1 - s);
-    double q = v * (1 - f * s);
-    double t = v * (1 - (1 - f) * s);
-
-    double r, g, b;
-
-    switch (hi) {
-      case 0:
-        r = v; g = t; b = p; break;
-      case 1:
-        r = q; g = v; b = p; break;
-      case 2:
-        r = p; g = v; b = t; break;
-      case 3:
-        r = p; g = q; b = v; break;
-      case 4:
-        r = t; g = p; b = v; break;
-      case 5:
-        r = v; g = p; b = q; break;
-      default:
-        r = 0; g = 0; b = 0; break;
+    // 优先使用查找表
+    Color result;
+    if (w == 0) {
+      result = _getColorFromLookupTable(h, s, v);
+      // 应用白色通道
+      result = Color(
+        result.r,
+        result.g,
+        result.b,
+        (w * 255).round().clamp(0, 255),
+        100,
+      );
+    } else {
+      result = _calculateHsvToRgbw(h, s, v, w);
     }
-
-    // 优化RGBW转换，与ESP32端保持一致
-    int rInt = (r * 255).round();
-    int gInt = (g * 255).round();
-    int bInt = (b * 255).round();
-    int wInt = (w * 255).round();
-
-    // 利用白色通道提高亮度
-    int minRgb = [rInt, gInt, bInt].reduce((a, b) => a < b ? a : b);
-    rInt -= minRgb;
-    gInt -= minRgb;
-    bInt -= minRgb;
-    wInt += minRgb;
-
-    // 确保值在有效范围内
-    rInt = rInt.clamp(0, 255);
-    gInt = gInt.clamp(0, 255);
-    bInt = bInt.clamp(0, 255);
-    wInt = wInt.clamp(0, 255);
-
-    Color result = Color(
-      rInt,
-      gInt,
-      bInt,
-      wInt,
-      100,
-    );
 
     // 缓存结果
     _hsvToRgbwCache[cacheKey] = result;
     // 限制缓存大小
-    if (_hsvToRgbwCache.length > 100) {
+    if (_hsvToRgbwCache.length > _maxCacheSize) {
       _hsvToRgbwCache.remove(_hsvToRgbwCache.keys.first);
     }
 

@@ -5,9 +5,11 @@
 #include <FreeRTOS.h>
 #include <semphr.h>
 
-// 颜色查找表缓存
+// 颜色查找表缓存 - 扩展为包含饱和度和亮度的三维查找表
 #define HSV_TABLE_SIZE 360
-Color hsvToRgbwTable[HSV_TABLE_SIZE];
+#define SAT_TABLE_SIZE 5
+#define VAL_TABLE_SIZE 5
+Color hsvToRgbwTable[HSV_TABLE_SIZE][SAT_TABLE_SIZE][VAL_TABLE_SIZE];
 bool hsvTableInitialized = false;
 
 // 效果缓存
@@ -23,8 +25,16 @@ LightStateContext lightContext;
 // 初始化HSV到RGBW的查找表
 void initHsvTable() {
   if (!hsvTableInitialized) {
+    // 预计算不同饱和度和亮度的颜色值
+    uint8_t satValues[] = {0, 64, 128, 192, 255};
+    uint8_t valValues[] = {0, 64, 128, 192, 255};
+    
     for (uint16_t h = 0; h < HSV_TABLE_SIZE; h++) {
-      hsvToRgbwTable[h] = hsvToRgbw(h, 255, 255);
+      for (uint8_t sIndex = 0; sIndex < SAT_TABLE_SIZE; sIndex++) {
+        for (uint8_t vIndex = 0; vIndex < VAL_TABLE_SIZE; vIndex++) {
+          hsvToRgbwTable[h][sIndex][vIndex] = hsvToRgbw(h, satValues[sIndex], valValues[vIndex]);
+        }
+      }
     }
     hsvTableInitialized = true;
     Serial.println("HSV lookup table initialized");
@@ -246,8 +256,26 @@ void lightTask(void *pvParameters) {
   }
 }
 
+// 从查找表中获取颜色值
+Color getColorFromLookupTable(uint16_t h, uint8_t s, uint8_t v) {
+  // 确保色相在有效范围内
+  h %= HSV_TABLE_SIZE;
+  
+  // 计算饱和度和亮度的索引
+  uint8_t sIndex = min((s * (SAT_TABLE_SIZE - 1)) / 255, (uint8_t)(SAT_TABLE_SIZE - 1));
+  uint8_t vIndex = min((v * (VAL_TABLE_SIZE - 1)) / 255, (uint8_t)(VAL_TABLE_SIZE - 1));
+  
+  return hsvToRgbwTable[h][sIndex][vIndex];
+}
+
 // HSV转RGBW - 优化版本
 Color hsvToRgbw(uint16_t h, uint8_t s, uint8_t v) {
+  // 优先使用查找表
+  if (hsvTableInitialized) {
+    return getColorFromLookupTable(h, s, v);
+  }
+  
+  // 如果查找表未初始化，使用计算方法
   Color color;
   uint8_t r, g, b;
   
