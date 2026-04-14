@@ -197,6 +197,8 @@
  /root/.platformio/packages/framework-arduinoespressif32/cores/esp32/cbuf.h \
  /root/.platformio/packages/framework-arduinoespressif32/libraries/ESPmDNS/src/ESPmDNS.h \
  /root/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/mdns/include/mdns.h \
+ include/config/config.h \
+ /root/.platformio/packages/framework-arduinoespressif32/libraries/Preferences/src/Preferences.h \
  include/communication/com_server.h \
  .pio/libdeps/esp32dev/WebSockets/src/WebSocketsServer.h \
  .pio/libdeps/esp32dev/WebSockets/src/WebSockets.h \
@@ -245,7 +247,6 @@
  /root/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/nghttp/port/include/http_parser.h \
  /root/.platformio/packages/framework-arduinoespressif32/libraries/WebServer/src/Uri.h \
  /root/.platformio/packages/framework-arduinoespressif32/libraries/WebServer/src/detail/RequestHandler.h \
- include/communication/message_queue.h include/config/config.h \
- /root/.platformio/packages/framework-arduinoespressif32/libraries/Preferences/src/Preferences.h \
- include/light/light_engine.h include/memory/memory_mgr.h \
+ include/communication/message_queue.h include/light/light_engine.h \
+ include/memory/memory_mgr.h \
  /root/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/esp_system/include/esp_task_wdt.h

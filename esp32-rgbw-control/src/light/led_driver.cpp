@@ -1,6 +1,5 @@
 #include "light/led_driver.h"
 #include "config/config.h"
-#include "network/network_mgr.h"
 #include <FastLED.h>
 
 #define MAX_LED_COUNT 100 // 最大支持的LED数量
