@@ -57,22 +57,15 @@ class _DeviceListPageState extends State<DeviceListPage> {
                           onTap: () async {
                             try {
                               await deviceController.connectToDevice(device);
+                              // 设置LightController的WebSocketService并获取状态
+                              final lightController = Provider.of<LightController>(context, listen: false);
+                              lightController.setWebSocketService(deviceController.webSocketService);
+                              lightController.getStatus();
                               // 导航到控制页面
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) {
-                                    // 创建LightController并传入WebSocketService
-                                    final lightController = LightController(
-                                      deviceController.webSocketService,
-                                    );
-                                    // 立即获取设备状态
-                                    lightController.getStatus();
-                                    return ChangeNotifierProvider.value(
-                                      value: lightController,
-                                      child: ControlPage(device: device),
-                                    );
-                                  },
+                                  builder: (context) => ControlPage(device: device),
                                 ),
                               );
                             } catch (e) {
