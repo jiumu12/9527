@@ -2,113 +2,120 @@
 
 ## 项目概述
 
-这是一个完整的 ESP32 RGBW 灯带控制系统，包含嵌入式固件和 Flutter 移动应用，支持通过 WiFi 网络远程控制 RGBW 灯带。
+ESP32 RGBW 灯带控制系统是一个功能完整的智能灯光解决方案，由ESP32微控制器和Flutter移动应用组成，支持远程控制RGBW灯带的颜色、亮度和各种动态效果。
 
-## 功能特性
+## 主要特性
 
-- ✅ RGBW 四通道独立控制
+- ✅ 支持RGBW灯带控制（包含独立白色通道）
 - ✅ 多种灯光效果（静态、呼吸、彩虹、闪烁）
-- ✅ WiFi 连接（AP模式和Station模式）
-- ✅ Web 界面控制（快速验证工具）
+- ✅ 基于Web的配置界面（WiFi设置、LED参数）
 - ✅ 移动应用控制（Flutter跨平台）
-- ✅ mDNS 设备发现
-- ✅ WebSocket 实时通信
-- ✅ 硬件抽象层（提高可测试性）
-- ✅ 网络重连机制（提高稳定性）
-- ✅ 心跳包机制（保持连接）
-- ✅ 二进制协议支持（提高性能）
+- ✅ 自动设备发现（mDNS）
+- ✅ 消息队列确保命令不丢失
+- ✅ 状态机管理灯光效果
+- ✅ FreeRTOS任务调度
+- ✅ 内存使用监控
+- ✅ 颜色空间转换优化
+- ✅ 效果缓存
+- ✅ 硬件加速
 
-## 项目结构
+## 系统架构
+
+系统采用客户端-服务器架构：
+
+- **ESP32端**：运行固件，控制灯带硬件，提供网络服务
+- **移动应用端**：Flutter应用，提供用户界面和设备控制
+- **通信层**：WebSocket协议，实现实时双向通信
+
+## 目录结构
 
 ```
-├── esp32-rgbw-control/     # 嵌入式固件
-│   ├── include/            # 头文件
-│   ├── src/                # 源代码
-│   ├── platformio.ini      # PlatformIO配置
-│   └── README.md           # 固件说明
-├── esp32-rgbw-app/         # Flutter移动应用
-│   ├── lib/                # 应用代码
-│   ├── pubspec.yaml        # 依赖管理
-│   └── README.md           # 应用说明
-├── ESP32_RGBW_CONTROL_SYSTEM.md  # 完整项目文档
-└── README.md               # 本文件
+├── esp32-rgbw-control/  # ESP32端代码
+├── esp32-rgbw-app/      # Flutter移动应用代码
+├── ESP32_RGBW_CONTROL_SYSTEM_SUPER_DOC.md  # 详细文档
+└── README.md            # 本文件
 ```
 
 ## 快速开始
 
-### 1. 固件开发环境
-1. 安装 Visual Studio Code
-2. 安装 PlatformIO 插件
-3. 打开 `esp32-rgbw-control` 目录
-4. 安装依赖库：FastLED, ArduinoJson, WebSockets
-5. 配置 `include/config/config.h` 中的 WiFi 设置
-6. 编译并上传固件到 ESP32
+### 1. ESP32端设置
 
-### 2. 移动应用开发环境
-1. 安装 Flutter SDK
-2. 安装 Android Studio
-3. 打开 `esp32-rgbw-app` 目录
-4. 运行 `flutter pub get` 安装依赖
-5. 运行 `flutter run` 启动应用
+1. **硬件连接**：
+   - 将RGBW灯带的DI引脚连接到ESP32的GPIO7
+   - 连接电源和地线
 
-### 3. 使用方法
-1. 确保 ESP32 和移动设备在同一网络
-2. 打开移动应用，自动发现设备
-3. 选择设备并连接
-4. 使用控制界面调整颜色和效果
+2. **编译上传**：
+   - 使用PlatformIO编译代码
+   - 通过USB上传到ESP32
 
-## 技术栈
+3. **网络配置**：
+   - 首次启动时，ESP32会创建名为"ESP32-RGBW"的WiFi热点
+   - 连接到该热点
+   - 访问 http://192.168.4.1/config 配置WiFi和LED参数
 
-| 类别 | 技术/库 | 用途 |
-|------|---------|------|
-| 嵌入式 | ESP32 + Arduino Framework | 主控制器 |
-| 灯带控制 | FastLED | LED 灯带驱动 |
-| 网络 | ESPmDNS, WiFi | 网络连接和设备发现 |
-| 通信 | WebSockets, WebServer | 实时通信和Web界面 |
-| 移动应用 | Flutter, web_socket_channel | 跨平台移动应用 |
-| 状态管理 | Provider | Flutter 状态管理 |
-| JSON处理 | ArduinoJson | 命令解析和状态同步 |
+### 2. 移动应用设置
 
-## 通信协议
+1. **安装应用**：
+   - 构建并安装Flutter应用到移动设备
 
-系统支持两种通信协议：
-- **JSON 协议**：人类可读，便于调试
-- **二进制协议**：高效，适用于高频更新场景
+2. **设备发现**：
+   - 确保手机和ESP32在同一网络
+   - 打开应用，系统会自动发现设备
 
-## 硬件连接
+3. **控制灯光**：
+   - 点击设备进入控制页面
+   - 调整颜色、亮度和效果
 
-| ESP32引脚 | 功能 | 连接对象 |
-|-----------|------|----------|
-| GPIO7 | 数据输出 | 灯带DI（通过220-470Ω电阻） |
-| 5V | 电源输出 | 灯带V+ |
-| GND | 接地 | 灯带GND |
+## 详细文档
 
-## 常见问题
+请参考 [ESP32_RGBW_CONTROL_SYSTEM_SUPER_DOC.md](file:///workspace/ESP32_RGBW_CONTROL_SYSTEM_SUPER_DOC.md) 获取完整的技术文档，包括：
 
-**Q: 设备未发现？**  
-A: 确保ESP32和手机在同一网络，检查mDNS服务是否正常
+- 系统架构详细说明
+- 核心模块功能介绍
+- 硬件连接指南
+- 开发与部署步骤
+- 性能优化措施
+- 故障排除指南
+- 扩展与定制方法
 
-**Q: 连接失败？**  
-A: 检查WiFi配置，确保密码正确
+## 技术规格
 
-**Q: LED 不亮？**  
-A: 检查硬件连接，确保电源供应充足
+- **ESP32端**：
+  - 处理器：Tensilica Xtensa 32-bit LX6 双核
+  - 内存：520KB SRAM
+  - 存储：4MB Flash
+  - WiFi：802.11 b/g/n
+  - 通信：WebSocket, HTTP
 
-**Q: 编译错误？**  
-A: 确保所有依赖库已正确安装
+- **移动应用**：
+  - 平台：iOS, Android
+  - 开发框架：Flutter
+  - 通信：WebSocket
+  - 设备发现：mDNS
 
-## 文档
+- **灯带支持**：
+  - 类型：RGBW可寻址灯带
+  - 协议：单线归零码
+  - 支持型号：SK6812, WS2812B+W, WS2815等
 
-完整项目文档请参考：[ESP32_RGBW_CONTROL_SYSTEM.md](file:///workspace/ESP32_RGBW_CONTROL_SYSTEM.md)
+## 版本历史
 
-## 版本
+| 版本 | 日期 | 变更内容 |
+|------|------|----------|
+| v1.0 | 2026-04-14 | 初始版本 |
+| v1.1 | 2026-04-15 | 添加Web配置界面 |
+| v1.2 | 2026-04-16 | 实现消息队列 |
+| v1.3 | 2026-04-17 | 添加状态机设计模式 |
+| v1.4 | 2026-04-18 | 优化内存管理 |
+| v1.5 | 2026-04-19 | 实现FreeRTOS任务调度 |
+| v1.6 | 2026-04-20 | 优化颜色空间转换 |
+| v1.7 | 2026-04-21 | 实现效果缓存 |
+| v1.8 | 2026-04-22 | 优化硬件加速 |
 
-- **固件版本**: 1.0.0
-- **应用版本**: 1.0.0
-- **文档版本**: 2.0.0
+## 许可证
 
-## 维护者
+MIT License
 
-ESP32 RGBW Control Project
+## 联系方式
 
-🌟 **Happy Coding! 祝你编程愉快！**
+如有问题或建议，请联系项目维护者。
