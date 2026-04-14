@@ -56,31 +56,40 @@ void handleCommand(char* command) {
       return;
     }
     
+    // 提取消息ID
+    int msgId = jsonDoc.containsKey("msgId") ? jsonDoc["msgId"] : 0;
+    
     const char* cmd = jsonDoc["cmd"];
     
     if (strcmp(cmd, "static") == 0) {
-      parseStaticCommand(command);
+      parseStaticCommand(command, msgId);
     } else if (strcmp(cmd, "effect") == 0) {
-      parseEffectCommand(command);
+      parseEffectCommand(command, msgId);
     } else if (strcmp(cmd, "switch") == 0) {
-      parseSwitchCommand(command);
+      parseSwitchCommand(command, msgId);
     } else if (strcmp(cmd, "get_status") == 0) {
-      parseGetStatusCommand();
+      parseGetStatusCommand(msgId);
     } else if (strcmp(cmd, "ping") == 0) {
       // 心跳包处理
       pingDoc.clear();
       pingDoc["cmd"] = "pong";
+      if (msgId > 0) {
+        pingDoc["msgId"] = msgId;
+      }
       String pingResponse;
       serializeJson(pingDoc, pingResponse);
       broadcastMessage(pingResponse.c_str());
     } else if (strcmp(cmd, "protocol_negotiate") == 0) {
-      handleProtocolNegotiation();
+      handleProtocolNegotiation(msgId);
     } else {
       Serial.printf("Unknown command: %s\n", cmd);
       // 发送错误响应
       errorDoc.clear();
       errorDoc["cmd"] = "error";
       errorDoc["message"] = "Unknown command";
+      if (msgId > 0) {
+        errorDoc["msgId"] = msgId;
+      }
       String errorResponse;
       serializeJson(errorDoc, errorResponse);
       broadcastMessage(errorResponse.c_str());
@@ -146,7 +155,7 @@ void handleBinaryCommand(uint8_t* data) {
       // 心跳包，无需处理
       break;
     case CMD_BINARY_GET_STATUS:
-      parseGetStatusCommand();
+      parseGetStatusCommand(0);
       break;
     default:
       Serial.printf("Unknown binary command: 0x%02X\n", cmd);
@@ -156,24 +165,37 @@ void handleBinaryCommand(uint8_t* data) {
 // 静态JSON文档，避免频繁动态分配
 StaticJsonDocument<128> protocolDoc;
 
-void handleProtocolNegotiation() {
+void handleProtocolNegotiation(int msgId) {
   // 发送支持的协议类型
   protocolDoc.clear();
   protocolDoc["cmd"] = "protocol_supported";
   protocolDoc["json"] = true;
   protocolDoc["binary"] = true;
+  if (msgId > 0) {
+    protocolDoc["msgId"] = msgId;
+  }
   
   String response;
   serializeJson(protocolDoc, response);
   broadcastMessage(response.c_str());
 }
 
-void parseStaticCommand(const char* json) {
+void parseStaticCommand(const char* json, int msgId) {
   jsonDoc.clear();
   DeserializationError error = deserializeJson(jsonDoc, json);
   
   if (error) {
     Serial.printf("JSON parsing error: %s\n", error.c_str());
+    // 发送错误响应
+    errorDoc.clear();
+    errorDoc["cmd"] = "error";
+    errorDoc["message"] = "Invalid JSON format";
+    if (msgId > 0) {
+      errorDoc["msgId"] = msgId;
+    }
+    String errorResponse;
+    serializeJson(errorDoc, errorResponse);
+    broadcastMessage(errorResponse.c_str());
     return;
   }
   
@@ -183,6 +205,9 @@ void parseStaticCommand(const char* json) {
     errorDoc.clear();
     errorDoc["cmd"] = "error";
     errorDoc["message"] = "Missing 'color' field";
+    if (msgId > 0) {
+      errorDoc["msgId"] = msgId;
+    }
     String errorResponse;
     serializeJson(errorDoc, errorResponse);
     broadcastMessage(errorResponse.c_str());
@@ -196,6 +221,9 @@ void parseStaticCommand(const char* json) {
     errorDoc.clear();
     errorDoc["cmd"] = "error";
     errorDoc["message"] = "Missing color components";
+    if (msgId > 0) {
+      errorDoc["msgId"] = msgId;
+    }
     String errorResponse;
     serializeJson(errorDoc, errorResponse);
     broadcastMessage(errorResponse.c_str());
@@ -215,6 +243,9 @@ void parseStaticCommand(const char* json) {
     errorDoc.clear();
     errorDoc["cmd"] = "error";
     errorDoc["message"] = "Invalid color values";
+    if (msgId > 0) {
+      errorDoc["msgId"] = msgId;
+    }
     String errorResponse;
     serializeJson(errorDoc, errorResponse);
     broadcastMessage(errorResponse.c_str());
@@ -226,16 +257,29 @@ void parseStaticCommand(const char* json) {
   // 发送确认消息
   String response;
   jsonDoc["status"] = "ok";
+  if (msgId > 0) {
+    jsonDoc["msgId"] = msgId;
+  }
   serializeJson(jsonDoc, response);
   broadcastMessage(response.c_str());
 }
 
-void parseEffectCommand(const char* json) {
+void parseEffectCommand(const char* json, int msgId) {
   jsonDoc.clear();
   DeserializationError error = deserializeJson(jsonDoc, json);
   
   if (error) {
     Serial.printf("JSON parsing error: %s\n", error.c_str());
+    // 发送错误响应
+    errorDoc.clear();
+    errorDoc["cmd"] = "error";
+    errorDoc["message"] = "Invalid JSON format";
+    if (msgId > 0) {
+      errorDoc["msgId"] = msgId;
+    }
+    String errorResponse;
+    serializeJson(errorDoc, errorResponse);
+    broadcastMessage(errorResponse.c_str());
     return;
   }
   
@@ -245,6 +289,9 @@ void parseEffectCommand(const char* json) {
     errorDoc.clear();
     errorDoc["cmd"] = "error";
     errorDoc["message"] = "Missing 'name' field";
+    if (msgId > 0) {
+      errorDoc["msgId"] = msgId;
+    }
     String errorResponse;
     serializeJson(errorDoc, errorResponse);
     broadcastMessage(errorResponse.c_str());
@@ -256,6 +303,9 @@ void parseEffectCommand(const char* json) {
     errorDoc.clear();
     errorDoc["cmd"] = "error";
     errorDoc["message"] = "Missing 'color' field";
+    if (msgId > 0) {
+      errorDoc["msgId"] = msgId;
+    }
     String errorResponse;
     serializeJson(errorDoc, errorResponse);
     broadcastMessage(errorResponse.c_str());
@@ -272,6 +322,9 @@ void parseEffectCommand(const char* json) {
     errorDoc.clear();
     errorDoc["cmd"] = "error";
     errorDoc["message"] = "Missing color components";
+    if (msgId > 0) {
+      errorDoc["msgId"] = msgId;
+    }
     String errorResponse;
     serializeJson(errorDoc, errorResponse);
     broadcastMessage(errorResponse.c_str());
@@ -292,6 +345,9 @@ void parseEffectCommand(const char* json) {
     errorDoc.clear();
     errorDoc["cmd"] = "error";
     errorDoc["message"] = "Invalid parameter values";
+    if (msgId > 0) {
+      errorDoc["msgId"] = msgId;
+    }
     String errorResponse;
     serializeJson(errorDoc, errorResponse);
     broadcastMessage(errorResponse.c_str());
@@ -314,16 +370,29 @@ void parseEffectCommand(const char* json) {
   // 发送确认消息
   String response;
   jsonDoc["status"] = "ok";
+  if (msgId > 0) {
+    jsonDoc["msgId"] = msgId;
+  }
   serializeJson(jsonDoc, response);
   broadcastMessage(response.c_str());
 }
 
-void parseSwitchCommand(const char* json) {
+void parseSwitchCommand(const char* json, int msgId) {
   jsonDoc.clear();
   DeserializationError error = deserializeJson(jsonDoc, json);
   
   if (error) {
     Serial.printf("JSON parsing error: %s\n", error.c_str());
+    // 发送错误响应
+    errorDoc.clear();
+    errorDoc["cmd"] = "error";
+    errorDoc["message"] = "Invalid JSON format";
+    if (msgId > 0) {
+      errorDoc["msgId"] = msgId;
+    }
+    String errorResponse;
+    serializeJson(errorDoc, errorResponse);
+    broadcastMessage(errorResponse.c_str());
     return;
   }
   
@@ -333,6 +402,9 @@ void parseSwitchCommand(const char* json) {
     errorDoc.clear();
     errorDoc["cmd"] = "error";
     errorDoc["message"] = "Missing 'on' field";
+    if (msgId > 0) {
+      errorDoc["msgId"] = msgId;
+    }
     String errorResponse;
     serializeJson(errorDoc, errorResponse);
     broadcastMessage(errorResponse.c_str());
@@ -345,6 +417,9 @@ void parseSwitchCommand(const char* json) {
   // 发送确认消息
   String response;
   jsonDoc["status"] = "ok";
+  if (msgId > 0) {
+    jsonDoc["msgId"] = msgId;
+  }
   serializeJson(jsonDoc, response);
   broadcastMessage(response.c_str());
 }
@@ -352,7 +427,7 @@ void parseSwitchCommand(const char* json) {
 // 静态JSON文档，避免频繁动态分配
 StaticJsonDocument<256> statusDoc;
 
-void parseGetStatusCommand() {
+void parseGetStatusCommand(int msgId) {
   EffectParams params = getCurrentStatus();
   
   statusDoc.clear();
@@ -365,6 +440,9 @@ void parseGetStatusCommand() {
   statusDoc["color"]["w"] = params.color.w;
   statusDoc["brightness"] = params.color.brightness;
   statusDoc["speed"] = params.speed;
+  if (msgId > 0) {
+    statusDoc["msgId"] = msgId;
+  }
   
   String response;
   serializeJson(statusDoc, response);

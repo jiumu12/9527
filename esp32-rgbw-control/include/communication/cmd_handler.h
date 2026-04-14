@@ -5,10 +5,10 @@
 
 void handleCommand(char* command);
 void handleBinaryCommand(uint8_t* data);
-void handleProtocolNegotiation();
-void parseStaticCommand(const char* json);
-void parseEffectCommand(const char* json);
-void parseSwitchCommand(const char* json);
-void parseGetStatusCommand();
+void handleProtocolNegotiation(int msgId);
+void parseStaticCommand(const char* json, int msgId);
+void parseEffectCommand(const char* json, int msgId);
+void parseSwitchCommand(const char* json, int msgId);
+void parseGetStatusCommand(int msgId);
 
 #endif
