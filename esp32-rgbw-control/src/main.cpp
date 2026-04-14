@@ -6,7 +6,7 @@
 #include "memory/memory_mgr.h"
 #include <Arduino.h>
 #include "esp_task_wdt.h"
-#include <FreeRTOS.h>
+#include <freertos/FreeRTOS.h>
 
 // 网络任务
 void networkTask(void *pvParameters) {

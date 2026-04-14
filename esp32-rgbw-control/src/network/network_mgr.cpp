@@ -60,7 +60,7 @@ void connectWiFi() {
 }
 
 void setupMDNS() {
-  if (!MDNS.begin(MDNS_NAME)) {
+  if (!MDNS.begin("esp32-rgbw")) {
     Serial.println("Error setting up mDNS");
     return;
   }
@@ -86,15 +86,13 @@ void checkNetworkStatus() {
     }
   }
   
-  // 检查mDNS状态
-  if (!MDNS.isRunning()) {
-    Serial.println("mDNS not running");
-    // 尝试重新启动mDNS
-    if (currentMillis - lastReconnectAttempt > reconnectInterval) {
-      lastReconnectAttempt = currentMillis;
-      Serial.println("Attempting to restart mDNS...");
-      setupMDNS();
-    }
+  // 检查mDNS状态 - 移除isRunning()检查，因为ESP32 MDNS库可能没有这个方法
+  // 定期重新启动mDNS以确保它正常运行
+  static unsigned long lastMDNSCheck = 0;
+  if (currentMillis - lastMDNSCheck > 60000) { // 每分钟检查一次
+    lastMDNSCheck = currentMillis;
+    // 重新启动mDNS
+    setupMDNS();
   }
 }
 

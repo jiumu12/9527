@@ -1,8 +1,9 @@
 #ifndef MESSAGE_QUEUE_H
 #define MESSAGE_QUEUE_H
 
-#include <FreeRTOS.h>
-#include <queue.h>
+#include <Arduino.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/queue.h>
 #include "config/config.h"
 
 // 消息类型

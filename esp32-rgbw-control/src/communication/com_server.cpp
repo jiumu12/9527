@@ -507,18 +507,19 @@ StaticJsonDocument<512> configDoc;
 
 // 处理获取配置请求
 void handleGetConfig() {
-  Config* config = getGlobalConfig();
+  Config config;
+  loadConfig(&config);
   
   configDoc.clear();
   configDoc["status"] = "ok";
-  configDoc["config"]["wifiMode"] = config->wifiMode;
-  configDoc["config"]["apSSID"] = config->apSSID;
-  configDoc["config"]["apPassword"] = config->apPassword;
-  configDoc["config"]["stationSSID"] = config->stationSSID;
-  configDoc["config"]["stationPassword"] = config->stationPassword;
-  configDoc["config"]["ledPin"] = config->ledPin;
-  configDoc["config"]["ledCount"] = config->ledCount;
-  configDoc["config"]["ledBrightness"] = config->ledBrightness;
+  configDoc["config"]["wifiMode"] = config.wifiMode;
+  configDoc["config"]["apSSID"] = config.apSSID;
+  configDoc["config"]["apPassword"] = config.apPassword;
+  configDoc["config"]["stationSSID"] = config.stationSSID;
+  configDoc["config"]["stationPassword"] = config.stationPassword;
+  configDoc["config"]["ledPin"] = config.ledPin;
+  configDoc["config"]["ledCount"] = config.ledCount;
+  configDoc["config"]["ledBrightness"] = config.ledBrightness;
   
   String response;
   serializeJson(configDoc, response);
@@ -564,11 +565,11 @@ void handleSaveConfig() {
       return;
     }
     
-    // 更新配置
-    updateConfig(&newConfig);
+    // 保存配置
+    saveConfig(&newConfig);
     
-    // 更新LED配置
-    updateLEDConfig();
+    // 重新初始化LED配置
+    initLED();
     
     server.send(200, "application/json", "{\"status\": \"ok\"}");
     

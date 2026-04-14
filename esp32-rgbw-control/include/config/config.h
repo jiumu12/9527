@@ -25,7 +25,9 @@
 
 // 服务器配置
 #define SERVER_PORT 8080            // WebSocket服务器端口
+#ifndef MDNS_NAME
 #define MDNS_NAME "esp32-rgbw"     // mDNS服务名称
+#endif
 
 // 模式定义
 enum LedMode {

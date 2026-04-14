@@ -2,8 +2,8 @@
 #include "config/config.h"
 #include "light/led_driver.h"
 #include <Arduino.h>
-#include <FreeRTOS.h>
-#include <semphr.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/semphr.h>
 
 // 颜色查找表缓存 - 扩展为包含饱和度和亮度的三维查找表
 #define HSV_TABLE_SIZE 360
@@ -105,7 +105,7 @@ void handleRainbowState(LightStateContext* context) {
     // 使用查找表加速颜色转换
     for (int i = 0; i < LED_COUNT; i++) {
       uint16_t hue = (context->rainbowHue + i * 10) % 360;
-      Color rainbowColor = hsvToRgbwTable[hue];
+      Color rainbowColor = getColorFromLookupTable(hue, 255, 255); // 最大饱和度和亮度
       rainbowColor.brightness = context->params.color.brightness;
       setPixelColor(i, rainbowColor);
     }
@@ -262,8 +262,8 @@ Color getColorFromLookupTable(uint16_t h, uint8_t s, uint8_t v) {
   h %= HSV_TABLE_SIZE;
   
   // 计算饱和度和亮度的索引
-  uint8_t sIndex = min((s * (SAT_TABLE_SIZE - 1)) / 255, (uint8_t)(SAT_TABLE_SIZE - 1));
-  uint8_t vIndex = min((v * (VAL_TABLE_SIZE - 1)) / 255, (uint8_t)(VAL_TABLE_SIZE - 1));
+  uint8_t sIndex = (uint8_t)min((int)(s * (SAT_TABLE_SIZE - 1)) / 255, (int)(SAT_TABLE_SIZE - 1));
+  uint8_t vIndex = (uint8_t)min((int)(v * (VAL_TABLE_SIZE - 1)) / 255, (int)(VAL_TABLE_SIZE - 1));
   
   return hsvToRgbwTable[h][sIndex][vIndex];
 }
