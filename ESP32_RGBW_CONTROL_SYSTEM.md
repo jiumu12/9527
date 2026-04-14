@@ -150,6 +150,7 @@ GND ---------------------------+--[灯带GND]
 ```
 esp32-rgbw-control/
 ├── platformio.ini          # PlatformIO配置文件
+├── README.md               # 项目说明
 └── src/
     ├── main.cpp            # 主程序
     ├── config.h            # 配置文件
@@ -189,8 +190,8 @@ esp32-rgbw-app/
 ├── lib/
 │   ├── main.dart                    # 应用入口
 │   ├── models/                      # 数据模型
-│   │   ├── device.dart              # 设备模型
 │   │   ├── color.dart               # 颜色模型
+│   │   ├── device.dart              # 设备模型
 │   │   └── effect.dart              # 效果模型
 │   ├── services/                    # 服务层
 │   │   ├── discovery_service.dart   # 设备发现服务
@@ -199,8 +200,8 @@ esp32-rgbw-app/
 │   │   ├── device_controller.dart   # 设备管理控制器
 │   │   └── light_controller.dart    # 灯光控制控制器
 │   └── pages/                       # 页面
-│       ├── device_list_page.dart    # 设备列表页
-│       └── control_page.dart        # 控制页面
+│       ├── control_page.dart        # 控制页面
+│       └── device_list_page.dart    # 设备列表页
 ├── pubspec.yaml                     # 依赖管理
 └── README.md                        # 项目说明
 ```
