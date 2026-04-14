@@ -28,6 +28,25 @@ void handleCommand(char* command) {
     
     if (error) {
       Serial.printf("JSON parsing error: %s\n", error.c_str());
+      // 发送错误响应
+      DynamicJsonDocument errorDoc(128);
+      errorDoc["cmd"] = "error";
+      errorDoc["message"] = "Invalid JSON format";
+      String errorResponse;
+      serializeJson(errorDoc, errorResponse);
+      broadcastMessage(errorResponse.c_str());
+      return;
+    }
+    
+    if (!doc.containsKey("cmd")) {
+      Serial.println("Missing 'cmd' field");
+      // 发送错误响应
+      DynamicJsonDocument errorDoc(128);
+      errorDoc["cmd"] = "error";
+      errorDoc["message"] = "Missing 'cmd' field";
+      String errorResponse;
+      serializeJson(errorDoc, errorResponse);
+      broadcastMessage(errorResponse.c_str());
       return;
     }
     
@@ -43,10 +62,22 @@ void handleCommand(char* command) {
       parseGetStatusCommand();
     } else if (strcmp(cmd, "ping") == 0) {
       // 心跳包处理
+      DynamicJsonDocument pingDoc(64);
+      pingDoc["cmd"] = "pong";
+      String pingResponse;
+      serializeJson(pingDoc, pingResponse);
+      broadcastMessage(pingResponse.c_str());
     } else if (strcmp(cmd, "protocol_negotiate") == 0) {
       handleProtocolNegotiation();
     } else {
       Serial.printf("Unknown command: %s\n", cmd);
+      // 发送错误响应
+      DynamicJsonDocument errorDoc(128);
+      errorDoc["cmd"] = "error";
+      errorDoc["message"] = "Unknown command";
+      String errorResponse;
+      serializeJson(errorDoc, errorResponse);
+      broadcastMessage(errorResponse.c_str());
     }
   }
 }
@@ -133,14 +164,56 @@ void handleProtocolNegotiation() {
 
 void parseStaticCommand(const char* json) {
   DynamicJsonDocument doc(256);
-  deserializeJson(doc, json);
+  DeserializationError error = deserializeJson(doc, json);
+  
+  if (error) {
+    Serial.printf("JSON parsing error: %s\n", error.c_str());
+    return;
+  }
+  
+  // 检查必要字段
+  if (!doc.containsKey("color")) {
+    Serial.println("Missing 'color' field");
+    DynamicJsonDocument errorDoc(128);
+    errorDoc["cmd"] = "error";
+    errorDoc["message"] = "Missing 'color' field";
+    String errorResponse;
+    serializeJson(errorDoc, errorResponse);
+    broadcastMessage(errorResponse.c_str());
+    return;
+  }
+  
+  JsonObject colorObj = doc["color"];
+  if (!colorObj.containsKey("r") || !colorObj.containsKey("g") || 
+      !colorObj.containsKey("b") || !colorObj.containsKey("w")) {
+    Serial.println("Missing color components");
+    DynamicJsonDocument errorDoc(128);
+    errorDoc["cmd"] = "error";
+    errorDoc["message"] = "Missing color components";
+    String errorResponse;
+    serializeJson(errorDoc, errorResponse);
+    broadcastMessage(errorResponse.c_str());
+    return;
+  }
   
   Color color;
-  color.r = doc["color"]["r"];
-  color.g = doc["color"]["g"];
-  color.b = doc["color"]["b"];
-  color.w = doc["color"]["w"];
-  color.brightness = doc["brightness"];
+  color.r = colorObj["r"];
+  color.g = colorObj["g"];
+  color.b = colorObj["b"];
+  color.w = colorObj["w"];
+  color.brightness = doc.containsKey("brightness") ? doc["brightness"] : 100;
+  
+  // 验证颜色值范围
+  if (color.r > 255 || color.g > 255 || color.b > 255 || color.w > 255 || color.brightness > 100) {
+    Serial.println("Invalid color values");
+    DynamicJsonDocument errorDoc(128);
+    errorDoc["cmd"] = "error";
+    errorDoc["message"] = "Invalid color values";
+    String errorResponse;
+    serializeJson(errorDoc, errorResponse);
+    broadcastMessage(errorResponse.c_str());
+    return;
+  }
   
   setStaticColor(color);
   
@@ -153,17 +226,71 @@ void parseStaticCommand(const char* json) {
 
 void parseEffectCommand(const char* json) {
   DynamicJsonDocument doc(256);
-  deserializeJson(doc, json);
+  DeserializationError error = deserializeJson(doc, json);
+  
+  if (error) {
+    Serial.printf("JSON parsing error: %s\n", error.c_str());
+    return;
+  }
+  
+  // 检查必要字段
+  if (!doc.containsKey("name")) {
+    Serial.println("Missing 'name' field");
+    DynamicJsonDocument errorDoc(128);
+    errorDoc["cmd"] = "error";
+    errorDoc["message"] = "Missing 'name' field";
+    String errorResponse;
+    serializeJson(errorDoc, errorResponse);
+    broadcastMessage(errorResponse.c_str());
+    return;
+  }
+  
+  if (!doc.containsKey("color")) {
+    Serial.println("Missing 'color' field");
+    DynamicJsonDocument errorDoc(128);
+    errorDoc["cmd"] = "error";
+    errorDoc["message"] = "Missing 'color' field";
+    String errorResponse;
+    serializeJson(errorDoc, errorResponse);
+    broadcastMessage(errorResponse.c_str());
+    return;
+  }
   
   const char* effectName = doc["name"];
-  uint8_t speed = doc["speed"];
+  uint8_t speed = doc.containsKey("speed") ? doc["speed"] : 50;
+  
+  JsonObject colorObj = doc["color"];
+  if (!colorObj.containsKey("r") || !colorObj.containsKey("g") || 
+      !colorObj.containsKey("b") || !colorObj.containsKey("w")) {
+    Serial.println("Missing color components");
+    DynamicJsonDocument errorDoc(128);
+    errorDoc["cmd"] = "error";
+    errorDoc["message"] = "Missing color components";
+    String errorResponse;
+    serializeJson(errorDoc, errorResponse);
+    broadcastMessage(errorResponse.c_str());
+    return;
+  }
   
   Color color;
-  color.r = doc["color"]["r"];
-  color.g = doc["color"]["g"];
-  color.b = doc["color"]["b"];
-  color.w = doc["color"]["w"];
-  color.brightness = doc["brightness"];
+  color.r = colorObj["r"];
+  color.g = colorObj["g"];
+  color.b = colorObj["b"];
+  color.w = colorObj["w"];
+  color.brightness = doc.containsKey("brightness") ? doc["brightness"] : 100;
+  
+  // 验证参数范围
+  if (speed > 100 || color.r > 255 || color.g > 255 || 
+      color.b > 255 || color.w > 255 || color.brightness > 100) {
+    Serial.println("Invalid parameter values");
+    DynamicJsonDocument errorDoc(128);
+    errorDoc["cmd"] = "error";
+    errorDoc["message"] = "Invalid parameter values";
+    String errorResponse;
+    serializeJson(errorDoc, errorResponse);
+    broadcastMessage(errorResponse.c_str());
+    return;
+  }
   
   LedMode mode;
   if (strcmp(effectName, "breath") == 0) {
@@ -187,7 +314,24 @@ void parseEffectCommand(const char* json) {
 
 void parseSwitchCommand(const char* json) {
   DynamicJsonDocument doc(256);
-  deserializeJson(doc, json);
+  DeserializationError error = deserializeJson(doc, json);
+  
+  if (error) {
+    Serial.printf("JSON parsing error: %s\n", error.c_str());
+    return;
+  }
+  
+  // 检查必要字段
+  if (!doc.containsKey("on")) {
+    Serial.println("Missing 'on' field");
+    DynamicJsonDocument errorDoc(128);
+    errorDoc["cmd"] = "error";
+    errorDoc["message"] = "Missing 'on' field";
+    String errorResponse;
+    serializeJson(errorDoc, errorResponse);
+    broadcastMessage(errorResponse.c_str());
+    return;
+  }
   
   bool on = doc["on"];
   setPower(on);
