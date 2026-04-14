@@ -2,10 +2,10 @@
 #include "config.h"
 #include "cmd_handler.h"
 #include <Arduino.h>
-#include <ESP8266WebServer.h>
+#include <WebServer.h>
 
 WebSocketsServer webSocket = WebSocketsServer(SERVER_PORT);
-ESP8266WebServer server(80);
+WebServer server(80);
 
 // 简单的Web界面HTML
 const char index_html[] PROGMEM = R"=====(<!DOCTYPE html>
