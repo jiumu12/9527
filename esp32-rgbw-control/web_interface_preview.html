@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ESP32 RGBW Control</title>
+  <style>
+    /* 全局样式 */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f5f5f5;
+      color: #333;
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    /* 头部导航 */
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    .nav {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+      gap: 20px;
+    }
+    
+    .nav a {
+      text-decoration: none;
+      color: #4CAF50;
+      font-weight: bold;
+      font-size: 16px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      transition: all 0.3s ease;
+    }
+    
+    .nav a:hover {
+      background-color: #4CAF50;
+      color: white;
+    }
+    
+    h1 {
+      color: #333;
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+    
+    /* 控制面板 */
+    .control-panel {
+      background-color: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      padding: 30px;
+      margin-bottom: 30px;
+    }
+    
+    /* 控制组网格布局 */
+    .control-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+    }
+    
+    .control-group {
+      margin-bottom: 0;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #555;
+    }
+    
+    /* 开关按钮 */
+    .power-button {
+      width: 100%;
+      background-color: #4CAF50;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 18px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+    
+    .power-button:hover {
+      background-color: #45a049;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(76, 175, 80, 0.3);
+    }
+    
+    /* 模式选择 */
+    select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 16px;
+      background-color: white;
+    }
+    
+    /* 滑块控件 */
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    input[type="range"] {
+      flex: 1;
+      margin: 0;
+      -webkit-appearance: none;
+      height: 6px;
+      background: #ddd;
+      border-radius: 3px;
+      outline: none;
+    }
+    
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      background: #4CAF50;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    
+    input[type="range"]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      background: #4CAF50;
+      border-radius: 50%;
+      cursor: pointer;
+      border: none;
+    }
+    
+    /* 数值输入框 */
+    input[type="number"] {
+      width: 60px;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+      text-align: center;
+    }
+    
+    /* 状态显示 */
+    .status {
+      padding: 15px;
+      background-color: #e8f5e8;
+      border-radius: 8px;
+      text-align: center;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+    
+    .status.error {
+      background-color: #ffebee;
+      color: #c62828;
+    }
+    
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+      .container {
+        padding: 10px;
+      }
+      
+      .control-panel {
+        padding: 20px;
+      }
+      
+      .control-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      h1 {
+        font-size: 24px;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .nav {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .nav a {
+        width: 100%;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="nav">
+        <a href="/">控制</a>
+        <a href="/config">配置</a>
+      </div>
+      <h1>ESP32 RGBW灯带控制</h1>
+    </div>
+    
+    <div class="control-panel">
+      <div class="control-grid">
+        <div class="control-group">
+          <label>总开关</label>
+          <button id="power" class="power-button" onclick="togglePower()">关闭</button>
+        </div>
+        
+        <div class="control-group">
+          <label>模式选择</label>
+          <select id="mode" onchange="changeMode()">
+            <option value="0">静态</option>
+            <option value="1">呼吸</option>
+            <option value="2">彩虹</option>
+            <option value="3">闪烁</option>
+          </select>
+        </div>
+        
+        <div class="control-group">
+          <label>红色: <span id="r-value">0</span></label>
+          <div class="slider-container">
+            <input type="range" id="r" min="0" max="255" value="0" oninput="updateColor()">
+            <input type="number" id="r-num" min="0" max="255" value="0" oninput="updateColorFromNumber('r')">
+          </div>
+        </div>
+        
+        <div class="control-group">
+          <label>绿色: <span id="g-value">0</span></label>
+          <div class="slider-container">
+            <input type="range" id="g" min="0" max="255" value="0" oninput="updateColor()">
+            <input type="number" id="g-num" min="0" max="255" value="0" oninput="updateColorFromNumber('g')">
+          </div>
+        </div>
+        
+        <div class="control-group">
+          <label>蓝色: <span id="b-value">0</span></label>
+          <div class="slider-container">
+            <input type="range" id="b" min="0" max="255" value="0" oninput="updateColor()">
+            <input type="number" id="b-num" min="0" max="255" value="0" oninput="updateColorFromNumber('b')">
+          </div>
+        </div>
+        
+        <div class="control-group">
+          <label>白色: <span id="w-value">0</span></label>
+          <div class="slider-container">
+            <input type="range" id="w" min="0" max="255" value="0" oninput="updateColor()">
+            <input type="number" id="w-num" min="0" max="255" value="0" oninput="updateColorFromNumber('w')">
+          </div>
+        </div>
+        
+        <div class="control-group">
+          <label>亮度: <span id="brightness-value">80</span>%</label>
+          <div class="slider-container">
+            <input type="range" id="brightness" min="0" max="100" value="80" oninput="updateBrightness()">
+          </div>
+        </div>
+        
+        <div class="control-group">
+          <label>速度: <span id="speed-value">50</span></label>
+          <div class="slider-container">
+            <input type="range" id="speed" min="0" max="100" value="50" oninput="updateSpeed()">
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="status" id="status">
+      状态: 未连接 (预览模式)
+    </div>
+  </div>
+  
+  <script>
+    class WebSocketManager {
+      constructor() {
+        this.ws = null;
+        this.powerState = false;
+        this.reconnectAttempts = 0;
+        this.maxReconnectAttempts = 5;
+        this.reconnectDelay = 3000;
+        this.messageId = 0;
+        this.pendingMessages = new Map();
+        this.heartbeatInterval = null;
+        this.lastHeartbeat = 0;
+      }
+      
+      connect() {
+        // 预览模式，不实际连接
+        console.log('WebSocket connect called (preview mode)');
+        document.getElementById('status').textContent = '状态: 已连接 (预览模式)';
+        this.reconnectAttempts = 0;
+        this.startHeartbeat();
+        this.sendCommand('get_status');
+      }
+      
+      onOpen() {
+        console.log('WebSocket connected (preview mode)');
+        document.getElementById('status').textContent = '状态: 已连接 (预览模式)';
+        this.reconnectAttempts = 0;
+        this.startHeartbeat();
+        this.sendCommand('get_status');
+      }
+      
+      onMessage(event) {
+        try {
+          const data = JSON.parse(event.data);
+          
+          // 处理消息确认
+          if (data.msgId && this.pendingMessages.has(data.msgId)) {
+            const callback = this.pendingMessages.get(data.msgId);
+            if (callback) {
+              callback(data);
+            }
+            this.pendingMessages.delete(data.msgId);
+          }
+          
+          // 处理状态更新
+          if (data.cmd === 'status') {
+            this.updateUI(data);
+          }
+          
+          // 处理心跳响应
+          if (data.cmd === 'pong') {
+            this.lastHeartbeat = Date.now();
+          }
+        } catch (error) {
+          console.error('Error parsing WebSocket message:', error);
+        }
+      }
+      
+      onClose() {
+        console.log('WebSocket disconnected (preview mode)');
+        document.getElementById('status').textContent = '状态: 已断开 (预览模式)';
+        this.stopHeartbeat();
+        this.scheduleReconnect();
+      }
+      
+      onError(error) {
+        console.error('WebSocket error (preview mode):', error);
+      }
+      
+      scheduleReconnect() {
+        if (this.reconnectAttempts < this.maxReconnectAttempts) {
+          this.reconnectAttempts++;
+          const delay = this.reconnectDelay * Math.pow(1.5, this.reconnectAttempts - 1);
+          console.log(`Attempting to reconnect in ${delay}ms... (preview mode)`);
+          setTimeout(() => this.connect(), delay);
+        } else {
+          console.error('Max reconnect attempts reached (preview mode)');
+          document.getElementById('status').textContent = '状态: 连接失败 (预览模式)';
+        }
+      }
+      
+      startHeartbeat() {
+        this.stopHeartbeat();
+        this.heartbeatInterval = setInterval(() => {
+          console.log('Sending heartbeat (preview mode)');
+          this.sendCommand('ping');
+        }, 30000);
+      }
+      
+      stopHeartbeat() {
+        if (this.heartbeatInterval) {
+          clearInterval(this.heartbeatInterval);
+          this.heartbeatInterval = null;
+        }
+      }
+      
+      sendCommand(cmd, data = {}, callback = null) {
+        console.log('Sending command (preview mode):', cmd, data);
+        
+        // 模拟响应
+        setTimeout(() => {
+          if (cmd === 'get_status') {
+            const mockStatus = {
+              cmd: 'status',
+              on: this.powerState,
+              mode: parseInt(document.getElementById('mode').value),
+              color: {
+                r: parseInt(document.getElementById('r').value),
+                g: parseInt(document.getElementById('g').value),
+                b: parseInt(document.getElementById('b').value),
+                w: parseInt(document.getElementById('w').value)
+              },
+              brightness: parseInt(document.getElementById('brightness').value),
+              speed: parseInt(document.getElementById('speed').value)
+            };
+            this.updateUI(mockStatus);
+          } else if (cmd === 'switch') {
+            this.powerState = data.on;
+            document.getElementById('power').textContent = this.powerState ? '关闭' : '打开';
+          }
+        }, 100);
+        
+        return true;
+      }
+      
+      updateUI(data) {
+        this.powerState = data.on;
+        document.getElementById('power').textContent = data.on ? '关闭' : '打开';
+        document.getElementById('mode').value = data.mode;
+        document.getElementById('r').value = data.color.r;
+        document.getElementById('g').value = data.color.g;
+        document.getElementById('b').value = data.color.b;
+        document.getElementById('w').value = data.color.w;
+        document.getElementById('r-value').textContent = data.color.r;
+        document.getElementById('g-value').textContent = data.color.g;
+        document.getElementById('b-value').textContent = data.color.b;
+        document.getElementById('w-value').textContent = data.color.w;
+        document.getElementById('r-num').value = data.color.r;
+        document.getElementById('g-num').value = data.color.g;
+        document.getElementById('b-num').value = data.color.b;
+        document.getElementById('w-num').value = data.color.w;
+        document.getElementById('brightness').value = data.brightness;
+        document.getElementById('brightness-value').textContent = data.brightness;
+        document.getElementById('speed').value = data.speed;
+        document.getElementById('speed-value').textContent = data.speed;
+      }
+    }
+    
+    // 初始化 WebSocket 管理器
+    const wsManager = new WebSocketManager();
+    
+    // 页面加载完成后连接
+    window.addEventListener('DOMContentLoaded', () => {
+      wsManager.connect();
+    });
+    
+    // 事件处理函数
+    function togglePower() {
+      const newState = !wsManager.powerState;
+      document.getElementById('power').textContent = newState ? '关闭' : '打开';
+      wsManager.sendCommand('switch', { on: newState });
+    }
+    
+    function changeMode() {
+      const mode = document.getElementById('mode').value;
+      const r = parseInt(document.getElementById('r').value);
+      const g = parseInt(document.getElementById('g').value);
+      const b = parseInt(document.getElementById('b').value);
+      const w = parseInt(document.getElementById('w').value);
+      const brightness = parseInt(document.getElementById('brightness').value);
+      const speed = parseInt(document.getElementById('speed').value);
+      
+      if (mode == 0) {
+        // 静态模式
+        wsManager.sendCommand('static', {
+          color: { r, g, b, w },
+          brightness
+        });
+      } else {
+        // 效果模式
+        const effectNames = ['', 'breath', 'rainbow', 'flashing'];
+        wsManager.sendCommand('effect', {
+          name: effectNames[mode],
+          speed,
+          color: { r, g, b, w },
+          brightness
+        });
+      }
+    }
+    
+    function updateColor() {
+      const r = document.getElementById('r').value;
+      const g = document.getElementById('g').value;
+      const b = document.getElementById('b').value;
+      const w = document.getElementById('w').value;
+      const brightness = document.getElementById('brightness').value;
+      const mode = document.getElementById('mode').value;
+      
+      // 批量更新DOM
+      const updates = [
+        { id: 'r-value', value: r },
+        { id: 'g-value', value: g },
+        { id: 'b-value', value: b },
+        { id: 'w-value', value: w },
+        { id: 'r-num', value: r },
+        { id: 'g-num', value: g },
+        { id: 'b-num', value: b },
+        { id: 'w-num', value: w }
+      ];
+      
+      // 使用 requestAnimationFrame 优化DOM操作
+      requestAnimationFrame(() => {
+        updates.forEach(update => {
+          document.getElementById(update.id).textContent = update.value;
+        });
+      });
+      
+      if (mode == 0) {
+        wsManager.sendCommand('static', {
+          color: { r: parseInt(r), g: parseInt(g), b: parseInt(b), w: parseInt(w) },
+          brightness: parseInt(brightness)
+        });
+      }
+    }
+    
+    function updateColorFromNumber(color) {
+      const value = document.getElementById(color + '-num').value;
+      document.getElementById(color).value = value;
+      document.getElementById(color + '-value').textContent = value;
+      updateColor();
+    }
+    
+    function updateBrightness() {
+      const brightness = document.getElementById('brightness').value;
+      document.getElementById('brightness-value').textContent = brightness;
+      const r = document.getElementById('r').value;
+      const g = document.getElementById('g').value;
+      const b = document.getElementById('b').value;
+      const w = document.getElementById('w').value;
+      const mode = document.getElementById('mode').value;
+      
+      if (mode == 0) {
+        wsManager.sendCommand('static', {
+          color: { r: parseInt(r), g: parseInt(g), b: parseInt(b), w: parseInt(w) },
+          brightness: parseInt(brightness)
+        });
+      }
+    }
+    
+    function updateSpeed() {
+      const speed = document.getElementById('speed').value;
+      document.getElementById('speed-value').textContent = speed;
+      const r = document.getElementById('r').value;
+      const g = document.getElementById('g').value;
+      const b = document.getElementById('b').value;
+      const w = document.getElementById('w').value;
+      const brightness = document.getElementById('brightness').value;
+      const mode = document.getElementById('mode').value;
+      
+      if (mode != 0) {
+        const effectNames = ['', 'breath', 'rainbow', 'flashing'];
+        wsManager.sendCommand('effect', {
+          name: effectNames[mode],
+          speed: parseInt(speed),
+          color: { r: parseInt(r), g: parseInt(g), b: parseInt(b), w: parseInt(w) },
+          brightness: parseInt(brightness)
+        });
+      }
+    }
+  </script>
+</body>
+</html>
