@@ -5,14 +5,46 @@
 #include <FreeRTOS.h>
 #include <semphr.h>
 
+// 颜色查找表缓存
+#define HSV_TABLE_SIZE 360
+Color hsvToRgbwTable[HSV_TABLE_SIZE];
+bool hsvTableInitialized = false;
+
+// 效果缓存
+Color effectCache[100]; // 最大100个LED的缓存
+bool effectCacheValid = false;
+LedMode lastEffectMode = MODE_SOLID;
+Color lastEffectColor;
+uint8_t lastEffectSpeed = 0;
+
 // 状态机上下文
 LightStateContext lightContext;
+
+// 初始化HSV到RGBW的查找表
+void initHsvTable() {
+  if (!hsvTableInitialized) {
+    for (uint16_t h = 0; h < HSV_TABLE_SIZE; h++) {
+      hsvToRgbwTable[h] = hsvToRgbw(h, 255, 255);
+    }
+    hsvTableInitialized = true;
+    Serial.println("HSV lookup table initialized");
+  }
+}
 
 // 状态处理函数
 void handleSolidState(LightStateContext* context) {
   if (context->params.on) {
-    setAllPixels(context->params.color);
-    showPixels();
+    // 检查缓存是否有效
+    if (!effectCacheValid || lastEffectMode != MODE_SOLID || 
+        memcmp(&lastEffectColor, &context->params.color, sizeof(Color)) != 0) {
+      setAllPixels(context->params.color);
+      showPixels();
+      
+      // 更新缓存
+      lastEffectMode = MODE_SOLID;
+      lastEffectColor = context->params.color;
+      effectCacheValid = true;
+    }
   }
 }
 
@@ -35,12 +67,14 @@ void handleBreathingState(LightStateContext* context) {
       }
     }
     
-    Color breatheColor = context->params.color;
-    float brightness = context->breatheValue / 255.0 * (context->params.color.brightness / 100.0);
-    breatheColor.r = context->params.color.r * brightness;
-    breatheColor.g = context->params.color.g * brightness;
-    breatheColor.b = context->params.color.b * brightness;
-    breatheColor.w = context->params.color.w * brightness;
+    // 使用硬件FPU加速计算
+    float brightness = (float)context->breatheValue / 255.0f * ((float)context->params.color.brightness / 100.0f);
+    Color breatheColor;
+    breatheColor.r = (uint8_t)((float)context->params.color.r * brightness);
+    breatheColor.g = (uint8_t)((float)context->params.color.g * brightness);
+    breatheColor.b = (uint8_t)((float)context->params.color.b * brightness);
+    breatheColor.w = (uint8_t)((float)context->params.color.w * brightness);
+    breatheColor.brightness = context->params.color.brightness;
     
     setAllPixels(breatheColor);
     showPixels();
@@ -58,8 +92,10 @@ void handleRainbowState(LightStateContext* context) {
       context->rainbowHue = 0;
     }
     
+    // 使用查找表加速颜色转换
     for (int i = 0; i < LED_COUNT; i++) {
-      Color rainbowColor = hsvToRgbw(context->rainbowHue + i * 10, 255, 255);
+      uint16_t hue = (context->rainbowHue + i * 10) % 360;
+      Color rainbowColor = hsvToRgbwTable[hue];
       rainbowColor.brightness = context->params.color.brightness;
       setPixelColor(i, rainbowColor);
     }
@@ -109,6 +145,9 @@ void initLightEngine() {
   // 初始化LED
   initLED();
   
+  // 初始化HSV查找表
+  initHsvTable();
+  
   // 初始化状态机上下文
   lightContext.params.on = false;
   lightContext.params.mode = MODE_SOLID;
@@ -147,6 +186,7 @@ void setStaticColor(Color color) {
   if (xSemaphoreTake(lightContext.mutex, portMAX_DELAY) == pdTRUE) {
     lightContext.params.mode = MODE_SOLID;
     lightContext.params.color = color;
+    effectCacheValid = false; // 使缓存无效
     xSemaphoreGive(lightContext.mutex);
     Serial.println("Static color set");
   }
@@ -161,6 +201,7 @@ void setEffect(LedMode mode, Color color, uint8_t speed) {
     lightContext.breatheUp = true;
     lightContext.rainbowHue = 0;
     lightContext.lastUpdate = 0;
+    effectCacheValid = false; // 使缓存无效
     xSemaphoreGive(lightContext.mutex);
     Serial.println("Effect set");
   }
@@ -174,6 +215,7 @@ void setPower(bool on) {
       Color offColor = {0, 0, 0, 0, 0};
       setAllPixels(offColor);
       showPixels();
+      effectCacheValid = false; // 使缓存无效
     }
     xSemaphoreGive(lightContext.mutex);
     Serial.printf("Power %s\n", on ? "on" : "off");
@@ -200,11 +242,11 @@ void lightTask(void *pvParameters) {
       processLightState(&lightContext);
       xSemaphoreGive(lightContext.mutex);
     }
-    vTaskDelay(pdMS_TO_TICKS(10)); // 10ms延迟
+    vTaskDelay(pdMS_TO_TICKS(5)); // 减少延迟，提高响应速度
   }
 }
 
-// HSV转RGBW
+// HSV转RGBW - 优化版本
 Color hsvToRgbw(uint16_t h, uint8_t s, uint8_t v) {
   Color color;
   uint8_t r, g, b;
@@ -216,9 +258,10 @@ Color hsvToRgbw(uint16_t h, uint8_t s, uint8_t v) {
     uint8_t region = h / 60;
     uint8_t remainder = (h % 60) * 255 / 60;
     
-    uint8_t p = (v * (255 - s)) / 255;
-    uint8_t q = (v * (255 - (s * remainder) / 255)) / 255;
-    uint8_t t = (v * (255 - (s * (255 - remainder)) / 255)) / 255;
+    // 使用位运算和整数运算优化
+    uint16_t p = (uint16_t)v * (255 - s) / 255;
+    uint16_t q = (uint16_t)v * (255 - ((uint16_t)s * remainder) / 255) / 255;
+    uint16_t t = (uint16_t)v * (255 - ((uint16_t)s * (255 - remainder)) / 255) / 255;
     
     switch (region) {
       case 0: r = v; g = t; b = p; break;
@@ -230,10 +273,12 @@ Color hsvToRgbw(uint16_t h, uint8_t s, uint8_t v) {
     }
   }
   
-  color.r = r;
-  color.g = g;
-  color.b = b;
-  color.w = 0; // 白色通道单独控制
+  // 优化RGBW转换，利用白色通道提高亮度
+  uint8_t min_rgb = min(r, min(g, b));
+  color.r = r - min_rgb;
+  color.g = g - min_rgb;
+  color.b = b - min_rgb;
+  color.w = min_rgb;
   color.brightness = 100;
   
   return color;
