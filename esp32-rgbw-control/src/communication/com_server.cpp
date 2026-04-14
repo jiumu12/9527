@@ -501,23 +501,26 @@ const char index_html[] PROGMEM = R"=====(<!DOCTYPE html>
 </html>
 )=====";
 
+// 静态JSON文档，避免频繁动态分配
+StaticJsonDocument<512> configDoc;
+
 // 处理获取配置请求
 void handleGetConfig() {
   Config* config = getGlobalConfig();
   
-  DynamicJsonDocument doc(512);
-  doc["status"] = "ok";
-  doc["config"]["wifiMode"] = config->wifiMode;
-  doc["config"]["apSSID"] = config->apSSID;
-  doc["config"]["apPassword"] = config->apPassword;
-  doc["config"]["stationSSID"] = config->stationSSID;
-  doc["config"]["stationPassword"] = config->stationPassword;
-  doc["config"]["ledPin"] = config->ledPin;
-  doc["config"]["ledCount"] = config->ledCount;
-  doc["config"]["ledBrightness"] = config->ledBrightness;
+  configDoc.clear();
+  configDoc["status"] = "ok";
+  configDoc["config"]["wifiMode"] = config->wifiMode;
+  configDoc["config"]["apSSID"] = config->apSSID;
+  configDoc["config"]["apPassword"] = config->apPassword;
+  configDoc["config"]["stationSSID"] = config->stationSSID;
+  configDoc["config"]["stationPassword"] = config->stationPassword;
+  configDoc["config"]["ledPin"] = config->ledPin;
+  configDoc["config"]["ledCount"] = config->ledCount;
+  configDoc["config"]["ledBrightness"] = config->ledBrightness;
   
   String response;
-  serializeJson(doc, response);
+  serializeJson(configDoc, response);
   server.send(200, "application/json", response);
 }
 
@@ -526,8 +529,8 @@ void handleSaveConfig() {
   if (server.hasArg("plain")) {
     String json = server.arg("plain");
     
-    DynamicJsonDocument doc(512);
-    DeserializationError error = deserializeJson(doc, json);
+    configDoc.clear();
+    DeserializationError error = deserializeJson(configDoc, json);
     
     if (error) {
       server.send(400, "application/json", "{\"status\": \"error\", \"message\": \"Invalid JSON\"}");
@@ -535,14 +538,14 @@ void handleSaveConfig() {
     }
     
     Config newConfig;
-    newConfig.wifiMode = doc["wifiMode"];
-    newConfig.apSSID = doc["apSSID"].as<String>();
-    newConfig.apPassword = doc["apPassword"].as<String>();
-    newConfig.stationSSID = doc["stationSSID"].as<String>();
-    newConfig.stationPassword = doc["stationPassword"].as<String>();
-    newConfig.ledPin = doc["ledPin"];
-    newConfig.ledCount = doc["ledCount"];
-    newConfig.ledBrightness = doc["ledBrightness"];
+    newConfig.wifiMode = configDoc["wifiMode"];
+    newConfig.apSSID = configDoc["apSSID"].as<String>();
+    newConfig.apPassword = configDoc["apPassword"].as<String>();
+    newConfig.stationSSID = configDoc["stationSSID"].as<String>();
+    newConfig.stationPassword = configDoc["stationPassword"].as<String>();
+    newConfig.ledPin = configDoc["ledPin"];
+    newConfig.ledCount = configDoc["ledCount"];
+    newConfig.ledBrightness = configDoc["ledBrightness"];
     
     // 验证配置
     if (newConfig.ledPin < 0 || newConfig.ledPin > 39) {

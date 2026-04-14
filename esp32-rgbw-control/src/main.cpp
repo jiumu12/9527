@@ -2,12 +2,15 @@
 #include "network/network_mgr.h"
 #include "communication/com_server.h"
 #include "light/light_engine.h"
+#include "memory/memory_mgr.h"
 #include <Arduino.h>
 #include "esp_task_wdt.h"
 #include <FreeRTOS.h>
 
 // 网络任务
 void networkTask(void *pvParameters) {
+  unsigned long lastMemoryCheck = 0;
+  
   while (true) {
     // 处理WebSocket事件
     webSocket.loop();
@@ -17,6 +20,13 @@ void networkTask(void *pvParameters) {
     
     // 检查网络状态
     checkNetworkStatus();
+    
+    // 每5秒打印一次内存使用情况
+    unsigned long currentMillis = millis();
+    if (currentMillis - lastMemoryCheck > 5000) {
+      lastMemoryCheck = currentMillis;
+      printMemoryUsage();
+    }
     
     vTaskDelay(pdMS_TO_TICKS(10)); // 10ms延迟
   }
@@ -29,6 +39,9 @@ void setup() {
   // 初始化看门狗定时器
   esp_task_wdt_init(10, true); // 10秒超时
   esp_task_wdt_add(NULL);
+  
+  // 初始化内存管理器
+  initMemoryManager();
   
   // 初始化网络
   initNetwork();
