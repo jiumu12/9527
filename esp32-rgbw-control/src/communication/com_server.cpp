@@ -370,7 +370,8 @@ const char index_html[] PROGMEM = R"=====(<!DOCTYPE html>
     let powerState = false;
     
     function connectWebSocket() {
-      ws = new WebSocket('ws://' + window.location.host + ':' + window.location.port + '/ws');
+      // WebSocket 连接到与 HTTP 服务器相同的端口
+      ws = new WebSocket('ws://' + window.location.host + '/ws');
       
       ws.onopen = function() {
         document.getElementById('status').textContent = '状态: 已连接';

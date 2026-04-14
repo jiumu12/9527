@@ -60,7 +60,7 @@ void connectWiFi() {
 }
 
 void setupMDNS() {
-  if (!MDNS.begin("esp32-rgbw")) {
+  if (!MDNS.begin(MDNS_NAME)) {
     Serial.println("Error setting up mDNS");
     return;
   }

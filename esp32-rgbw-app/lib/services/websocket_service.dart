@@ -126,9 +126,8 @@ class WebSocketService {
         try {
           if (_protocolType == ProtocolType.binary) {
             // 发送二进制心跳包
-            final buffer = Uint8List(2);
+            final buffer = Uint8List(1);
             buffer[0] = BinaryCommands.ping;
-            buffer[1] = 0; // 数据长度
             _channel.sink.add(buffer);
           } else {
             // 发送JSON心跳包
@@ -186,10 +185,9 @@ class WebSocketService {
 
   void sendBinaryCommand(int cmd, List<int> data) {
     if (_isConnected) {
-      final buffer = Uint8List(2 + data.length);
+      final buffer = Uint8List(1 + data.length);
       buffer[0] = cmd;
-      buffer[1] = data.length;
-      buffer.setRange(2, 2 + data.length, data);
+      buffer.setRange(1, 1 + data.length, data);
       _channel.sink.add(buffer);
       print('Sent binary command: 0x${cmd.toRadixString(16).padLeft(2, '0')}, length: ${data.length}');
     }

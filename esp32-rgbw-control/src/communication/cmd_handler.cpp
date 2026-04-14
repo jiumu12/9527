@@ -94,55 +94,52 @@ void handleBinaryCommand(uint8_t* data) {
   switch (cmd) {
     case CMD_BINARY_STATIC: {
       // 二进制格式: [0x01, r, g, b, w, brightness]
-      if (data[1] == 5) { // 确保数据长度正确
-        Color color;
-        color.r = data[2];
-        color.g = data[3];
-        color.b = data[4];
-        color.w = data[5];
-        color.brightness = data[6];
-        setStaticColor(color);
-      }
+      // 长度校验: 总共6个字节 (命令+5个数据)
+      Color color;
+      color.r = data[1];
+      color.g = data[2];
+      color.b = data[3];
+      color.w = data[4];
+      color.brightness = data[5];
+      setStaticColor(color);
       break;
     }
     case CMD_BINARY_EFFECT: {
       // 二进制格式: [0x02, effect_type, speed, r, g, b, w, brightness]
-      if (data[1] == 7) { // 确保数据长度正确
-        uint8_t effectType = data[2];
-        uint8_t speed = data[3];
-        
-        Color color;
-        color.r = data[4];
-        color.g = data[5];
-        color.b = data[6];
-        color.w = data[7];
-        color.brightness = data[8];
-        
-        LedMode mode;
-        switch (effectType) {
-          case EFFECT_BINARY_BREATH:
-            mode = MODE_BREATHING;
-            break;
-          case EFFECT_BINARY_RAINBOW:
-            mode = MODE_RAINBOW;
-            break;
-          case EFFECT_BINARY_FLASHING:
-            mode = MODE_FLASHING;
-            break;
-          default:
-            mode = MODE_SOLID;
-        }
-        
-        setEffect(mode, color, speed);
+      // 长度校验: 总共8个字节 (命令+7个数据)
+      uint8_t effectType = data[1];
+      uint8_t speed = data[2];
+      
+      Color color;
+      color.r = data[3];
+      color.g = data[4];
+      color.b = data[5];
+      color.w = data[6];
+      color.brightness = data[7];
+      
+      LedMode mode;
+      switch (effectType) {
+        case EFFECT_BINARY_BREATH:
+          mode = MODE_BREATHING;
+          break;
+        case EFFECT_BINARY_RAINBOW:
+          mode = MODE_RAINBOW;
+          break;
+        case EFFECT_BINARY_FLASHING:
+          mode = MODE_FLASHING;
+          break;
+        default:
+          mode = MODE_SOLID;
       }
+      
+      setEffect(mode, color, speed);
       break;
     }
     case CMD_BINARY_SWITCH: {
       // 二进制格式: [0x03, on_state]
-      if (data[1] == 1) { // 确保数据长度正确
-        bool on = data[2] == 1;
-        setPower(on);
-      }
+      // 长度校验: 总共2个字节 (命令+1个数据)
+      bool on = data[1] == 1;
+      setPower(on);
       break;
     }
     case CMD_BINARY_PING:

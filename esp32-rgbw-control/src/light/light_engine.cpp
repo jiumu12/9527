@@ -94,6 +94,9 @@ void handleBreathingState(LightStateContext* context) {
 void handleRainbowState(LightStateContext* context) {
   if (!context->params.on) return;
   
+  // 使用外部定义的当前 LED 数量
+  extern int currentLedCount;
+  
   unsigned long currentTime = millis();
   if (currentTime - context->lastUpdate > (100 - context->params.speed) * 10) {
     context->lastUpdate = currentTime;
@@ -103,7 +106,7 @@ void handleRainbowState(LightStateContext* context) {
     }
     
     // 使用查找表加速颜色转换
-    for (int i = 0; i < LED_COUNT; i++) {
+    for (int i = 0; i < currentLedCount; i++) {
       uint16_t hue = (context->rainbowHue + i * 10) % 360;
       Color rainbowColor = getColorFromLookupTable(hue, 255, 255); // 最大饱和度和亮度
       rainbowColor.brightness = context->params.color.brightness;

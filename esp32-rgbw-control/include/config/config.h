@@ -21,6 +21,7 @@
 #define DEFAULT_STATION_PASSWORD ""
 #define DEFAULT_LED_PIN 7                   // 推荐使用GPIO7
 #define DEFAULT_LED_COUNT 30                // 灯珠数量
+#define LED_COUNT DEFAULT_LED_COUNT         // LED 数量宏
 #define DEFAULT_LED_BRIGHTNESS 255          // 最大亮度
 
 // 服务器配置

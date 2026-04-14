@@ -3,10 +3,13 @@
 
 #include <WiFi.h>
 #include <ESPmDNS.h>
+#include "config/config.h"
 
 void initNetwork();
 void connectWiFi();
 void setupMDNS();
 void checkNetworkStatus();
+Config* getGlobalConfig();
+void updateConfig(Config* newConfig);
 
 #endif
