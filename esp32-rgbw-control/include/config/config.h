@@ -1,22 +1,27 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-// WiFi配置
-#define WIFI_MODE 1  // 0: AP模式, 1: Station模式
+#include <Preferences.h>
 
-// AP模式配置
-#define AP_SSID "ESP32-RGBW"
-#define AP_PASSWORD "12345678"
+// 配置存储键名
+#define PREF_WIFI_MODE "wifi_mode"
+#define PREF_AP_SSID "ap_ssid"
+#define PREF_AP_PASSWORD "ap_password"
+#define PREF_STATION_SSID "station_ssid"
+#define PREF_STATION_PASSWORD "station_password"
+#define PREF_LED_PIN "led_pin"
+#define PREF_LED_COUNT "led_count"
+#define PREF_LED_BRIGHTNESS "led_brightness"
 
-// Station模式配置（连接到路由器）
-#define STATION_SSID "YourRouterSSID"  // 替换为你的路由器SSID
-#define STATION_PASSWORD "YourRouterPassword"  // 替换为你的路由器密码
-
-// LED灯带配置
-#define LED_PIN 7                   // 推荐使用GPIO7
-#define LED_TYPE SK6812             // 灯带类型：SK6812, WS2812B, WS2815
-#define LED_COUNT 30                // 灯珠数量
-#define LED_BRIGHTNESS 255          // 最大亮度
+// 默认配置
+#define DEFAULT_WIFI_MODE 0  // 0: AP模式, 1: Station模式
+#define DEFAULT_AP_SSID "ESP32-RGBW"
+#define DEFAULT_AP_PASSWORD "12345678"
+#define DEFAULT_STATION_SSID ""
+#define DEFAULT_STATION_PASSWORD ""
+#define DEFAULT_LED_PIN 7                   // 推荐使用GPIO7
+#define DEFAULT_LED_COUNT 30                // 灯珠数量
+#define DEFAULT_LED_BRIGHTNESS 255          // 最大亮度
 
 // 服务器配置
 #define SERVER_PORT 8080            // WebSocket服务器端口
@@ -46,5 +51,22 @@ typedef struct {
   uint8_t speed;                    // 效果速度 (0-100)
   bool on;                          // 开关状态
 } EffectParams;
+
+// 配置结构
+typedef struct {
+  int wifiMode;
+  String apSSID;
+  String apPassword;
+  String stationSSID;
+  String stationPassword;
+  int ledPin;
+  int ledCount;
+  int ledBrightness;
+} Config;
+
+// 函数声明
+void loadConfig(Config* config);
+void saveConfig(Config* config);
+void resetConfig();
 
 #endif

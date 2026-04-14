@@ -4,47 +4,59 @@
 
 unsigned long lastReconnectAttempt = 0;
 const unsigned long reconnectInterval = 5000; // 5秒重连间隔
+Config globalConfig;
 
 void initNetwork() {
+  // 加载配置
+  loadConfig(&globalConfig);
+  
   connectWiFi();
   setupMDNS();
   Serial.println("Network initialized");
 }
 
 void connectWiFi() {
-  #if WIFI_MODE == 0
+  if (globalConfig.wifiMode == 0) {
     // AP模式
-    WiFi.softAP(AP_SSID, AP_PASSWORD);
+    WiFi.softAP(globalConfig.apSSID.c_str(), globalConfig.apPassword.c_str());
     Serial.println("WiFi AP started");
     Serial.print("AP IP address: ");
     Serial.println(WiFi.softAPIP());
-  #else
+  } else {
     // Station模式（连接到路由器）
-    WiFi.mode(WIFI_STA);
-    WiFi.begin(STATION_SSID, STATION_PASSWORD);
-    Serial.println("Connecting to WiFi...");
-    
-    // 等待连接
-    int attempts = 0;
-    while (WiFi.status() != WL_CONNECTED && attempts < 20) {
-      delay(500);
-      Serial.print(".");
-      attempts++;
-    }
-    
-    if (WiFi.status() == WL_CONNECTED) {
-      Serial.println("WiFi connected");
-      Serial.print("IP address: ");
-      Serial.println(WiFi.localIP());
+    if (globalConfig.stationSSID.length() > 0) {
+      WiFi.mode(WIFI_STA);
+      WiFi.begin(globalConfig.stationSSID.c_str(), globalConfig.stationPassword.c_str());
+      Serial.println("Connecting to WiFi...");
+      
+      // 等待连接
+      int attempts = 0;
+      while (WiFi.status() != WL_CONNECTED && attempts < 20) {
+        delay(500);
+        Serial.print(".");
+        attempts++;
+      }
+      
+      if (WiFi.status() == WL_CONNECTED) {
+        Serial.println("WiFi connected");
+        Serial.print("IP address: ");
+        Serial.println(WiFi.localIP());
+      } else {
+        Serial.println("Failed to connect to WiFi");
+        // 如果连接失败，回退到AP模式
+        WiFi.softAP(globalConfig.apSSID.c_str(), globalConfig.apPassword.c_str());
+        Serial.println("Fallback to AP mode");
+        Serial.print("AP IP address: ");
+        Serial.println(WiFi.softAPIP());
+      }
     } else {
-      Serial.println("Failed to connect to WiFi");
-      // 如果连接失败，回退到AP模式
-      WiFi.softAP(AP_SSID, AP_PASSWORD);
-      Serial.println("Fallback to AP mode");
+      // 没有配置Station模式，使用AP模式
+      WiFi.softAP(globalConfig.apSSID.c_str(), globalConfig.apPassword.c_str());
+      Serial.println("No station config, using AP mode");
       Serial.print("AP IP address: ");
       Serial.println(WiFi.softAPIP());
     }
-  #endif
+  }
 }
 
 void setupMDNS() {
@@ -61,7 +73,7 @@ void checkNetworkStatus() {
   unsigned long currentMillis = millis();
   
   // 检查WiFi状态
-  #if WIFI_MODE == 1
+  if (globalConfig.wifiMode == 1) {
     // Station模式
     if (WiFi.status() != WL_CONNECTED) {
       Serial.println("WiFi not connected");
@@ -72,7 +84,7 @@ void checkNetworkStatus() {
         connectWiFi();
       }
     }
-  #endif
+  }
   
   // 检查mDNS状态
   if (!MDNS.isRunning()) {
@@ -85,3 +97,15 @@ void checkNetworkStatus() {
     }
   }
 }
+
+Config* getGlobalConfig() {
+  return &globalConfig;
+}
+
+void updateConfig(Config* newConfig) {
+  globalConfig = *newConfig;
+  saveConfig(&globalConfig);
+  // 重新初始化网络
+  initNetwork();
+}
+

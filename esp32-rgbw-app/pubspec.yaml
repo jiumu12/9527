@@ -16,6 +16,7 @@ dependencies:
   flutter_colorpicker: ^1.0.3
   provider: ^6.0.3
   mdns: ^0.3.0
+  http: ^1.1.0
 
 dev_dependencies:
   flutter_test:
