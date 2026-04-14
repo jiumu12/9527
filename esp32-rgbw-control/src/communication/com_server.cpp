@@ -1,6 +1,7 @@
 #include "communication/com_server.h"
 #include "config/config.h"
 #include "communication/cmd_handler.h"
+#include "communication/message_queue.h"
 #include "network/network_mgr.h"
 #include "light/led_driver.h"
 #include <Arduino.h>
@@ -632,13 +633,14 @@ void handleWebSocketEvent(uint8_t client_num, WStype_t type, uint8_t *payload, s
       if (strstr((char*)payload, "ping") != NULL) {
         webSocket.sendTXT(client_num, "{\"cmd\": \"pong\"}");
       } else {
-        handleCommand((char*)payload);
+        // 使用消息队列处理命令
+        sendMessage(MSG_TYPE_COMMAND, (const char*)payload, length);
       }
       break;
     case WStype_BIN:
       Serial.printf("Received binary message, length: %u\n", length);
-      // 处理二进制消息
-      handleCommand((char*)payload);
+      // 使用消息队列处理二进制消息
+      sendMessage(MSG_TYPE_COMMAND, (const char*)payload, length);
       break;
     case WStype_ERROR:
       Serial.printf("WebSocket error\n");

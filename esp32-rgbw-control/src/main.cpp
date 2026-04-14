@@ -1,6 +1,7 @@
 #include "hardware/hw_init.h"
 #include "network/network_mgr.h"
 #include "communication/com_server.h"
+#include "communication/message_queue.h"
 #include "light/light_engine.h"
 #include "memory/memory_mgr.h"
 #include <Arduino.h>
@@ -20,6 +21,9 @@ void networkTask(void *pvParameters) {
     
     // 检查网络状态
     checkNetworkStatus();
+    
+    // 处理消息队列
+    processMessageQueue();
     
     // 每5秒打印一次内存使用情况
     unsigned long currentMillis = millis();
@@ -42,6 +46,9 @@ void setup() {
   
   // 初始化内存管理器
   initMemoryManager();
+  
+  // 初始化消息队列
+  initMessageQueue();
   
   // 初始化网络
   initNetwork();
